@@ -11,21 +11,15 @@
 
 ### 1.1 Terraform / HCL Resource Contracts
 ```hcl
-# No Terraform resources - workflow specification only
-# All Terraform execution happens through GitHub Actions workflows
-
-# Workflow Variables
 variable "github_oidc_role_arn" {
   type        = string
   description = "GitHub Actions OIDC role ARN"
 }
-
 variable "state_bucket_name" {
   type        = string
   description = "S3 bucket for Terraform state"
   default     = "sdd-k8s-platform-terraform-state"
 }
-
 variable "state_lock_table_name" {
   type        = string
   description = "DynamoDB table for state locking"
@@ -37,187 +31,89 @@ variable "state_lock_table_name" {
 ```yaml
 # .github/workflows/terraform-apply.yml
 name: Terraform Apply - Full Infrastructure
-
 on:
   push:
     branches: [main]
     paths: ['specs/**', 'src/**']
   workflow_dispatch:
     inputs:
-      phase:
-        description: 'Specific phase to apply (optional)'
-        required: false
-        default: 'all'
-        type: choice
-        options:
-        - all
-        - phase1
-        - phase2
-        - phase3
-        - phase4
-        - phase5
-
-permissions:
-  id-token: write
-  contents: read
-  pull-requests: write
-
+      phase: {default: 'all', type: choice, options: [all, phase1, phase2, phase3, phase4, phase5]}
+permissions: {id-token: write, contents: read, pull-requests: write}
 jobs:
   validate:
     runs-on: ubuntu-latest
-    outputs:
-      phases: ${{ steps.plan.outputs.phases }}
+    outputs: {phases: ${{ steps.plan.outputs.phases }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: ">=1.5.0"
-      
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
-        working-directory: .
-      
-      - name: Terraform Init
-        run: terraform init
-        env:
-          TF_VAR_region: us-east-1
-      
-      - name: Terraform Validate
-        run: terraform validate
-      
-      - name: Terraform Plan
-        id: plan
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v4
+        with: {terraform_version: ">=1.5.0"}
+      - run: terraform fmt -check -recursive
+      - run: terraform init
+        env: {TF_VAR_region: us-east-1}
+      - run: terraform validate
+      - id: plan
         run: |
           terraform plan -out=tfplan -json > plan.json
           echo "phases=$(jq -r '.configuration.root_module.resources | map(.mode) | unique | join(",")' plan.json)" >> $GITHUB_OUTPUT
-      
-      - name: Plan Summary
-        run: |
-          terraform show -json tfplan | jq -r '
-            {
-              "add": .resource_changes[] | select(.change.actions[] == "create") | .address,
-              "change": .resource_changes[] | select(.change.actions[] == "update") | .address,
-              "delete": .resource_changes[] | select(.change.actions[] == "delete") | .address
-            } | with_entries(select(.value != null)) | map_values([.]) | .'
-      
-      - name: Upload Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: tfplan
-          retention-days: 7
-
+      - uses: actions/upload-artifact@v4
+        with: {name: terraform-plan, path: tfplan, retention-days: 7}
   apply:
     needs: validate
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: ">=1.5.0"
-      
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
-      
-      - name: Download Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: terraform-plan
-      
-      - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v4
+        with: {terraform_version: ">=1.5.0"}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: {role-to-assume: ${{ secrets.AWS_ROLE_ARN }}, aws-region: us-east-1}
+      - uses: actions/download-artifact@v4
+        with: {name: terraform-plan}
+      - run: terraform apply -auto-approve tfplan
         env:
           TF_VAR_region: us-east-1
           TF_VAR_github_owner: ${{ github.repository_owner }}
           TF_VAR_github_repo: ${{ github.event.repository.name }}
           TF_VAR_mysql_root_password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           TF_VAR_mysql_password: ${{ secrets.MYSQL_PASSWORD }}
-      
-      - name: Validate Deployment
-        run: |
-          # Run all acceptance criteria from all phases
+      - run: |
           for phase in 001 002 003 004 005; do
-            echo "Validating Phase $phase..."
-            if [ -f "specs/$phase-*/validate.sh" ]; then
-              bash "specs/$phase-*/validate.sh"
-            fi
+            if [ -f "specs/$phase-*/validate.sh" ]; then bash "specs/$phase-*/validate.sh"; fi
           done
-      
-      - name: Store Outputs
-        run: |
+      - run: |
           terraform output -json > outputs.json
           echo "VPC_ID=$(terraform output -raw vpc_id)" >> $GITHUB_ENV
           echo "CLUSTER_ENDPOINT=$(terraform output -raw cluster_endpoint)" >> $GITHUB_ENV
           echo "APPLICATION_URL=$(terraform output -raw application_url)" >> $GITHUB_ENV
-      
-      - name: Update Summary
-        run: |
-          echo "## 🎉 Infrastructure Deployed Successfully!" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| VPC ID | $VPC_ID |" >> $GITHUB_STEP_SUMMARY
+      - run: |
+          echo "## 🎉 Infrastructure Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "| VPC | $VPC_ID |" >> $GITHUB_STEP_SUMMARY
           echo "| Cluster | $CLUSTER_ENDPOINT |" >> $GITHUB_STEP_SUMMARY
-          echo "| Application | $APPLICATION_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "| App | $APPLICATION_URL |" >> $GITHUB_STEP_SUMMARY
 
 # .github/workflows/terraform-destroy.yml
 name: Terraform Destroy
-
 on:
   workflow_dispatch:
     inputs:
-      confirm:
-        description: 'Type "destroy" to confirm'
-        required: true
-        default: ''
-
-permissions:
-  id-token: write
-  contents: read
-
+      confirm: {description: 'Type "destroy" to confirm', required: true}
+permissions: {id-token: write, contents: read}
 jobs:
   destroy:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: ">=1.5.0"
-      
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
-      
-      - name: Confirm Destroy
-        run: |
-          if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then
-            echo "❌ Destroy not confirmed. Type 'destroy' to proceed."
-            exit 1
-          fi
-      
-      - name: Terraform Init
-        run: terraform init
-        env:
-          TF_VAR_region: us-east-1
-      
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v4
+        with: {terraform_version: ">=1.5.0"}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: {role-to-assume: ${{ secrets.AWS_ROLE_ARN }}, aws-region: us-east-1}
+      - run: |
+          if [ "${{ github.event.inputs.confirm }}" != "destroy" ]; then exit 1; fi
+      - run: terraform init
+        env: {TF_VAR_region: us-east-1}
+      - run: terraform destroy -auto-approve
         env:
           TF_VAR_region: us-east-1
           TF_VAR_github_owner: ${{ github.repository_owner }}
@@ -227,54 +123,27 @@ jobs:
 
 # .github/workflows/terraform-unlock.yml
 name: Terraform State Unlock
-
 on:
   workflow_dispatch:
     inputs:
-      lock_id:
-        description: 'Lock ID (leave empty to show all locks)'
-        required: false
-
-permissions:
-  id-token: write
-  contents: read
-
+      lock_id: {description: 'Lock ID (empty to show all)'}
+permissions: {id-token: write, contents: read}
 jobs:
   unlock:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: ">=1.5.0"
-      
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
-      
-      - name: Terraform Init
-        run: terraform init
-        env:
-          TF_VAR_region: us-east-1
-      
-      - name: Show Locks
-        if: github.event.inputs.lock_id == ''
-        run: |
-          echo "Current Terraform state locks:"
-          terraform force-unlock -help | grep -A 10 "Usage:"
-          aws dynamodb scan --table-name terraform-locks --query 'Items[0].LockID' --output text 2>/dev/null || echo "No active locks found"
-      
-      - name: Unlock State
-        if: github.event.inputs.lock_id != ''
-        run: |
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v4
+        with: {terraform_version: ">=1.5.0"}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: {role-to-assume: ${{ secrets.AWS_ROLE_ARN }}, aws-region: us-east-1}
+      - run: terraform init
+        env: {TF_VAR_region: us-east-1}
+      - run: |
+          aws dynamodb scan --table-name terraform-locks --query 'Items[0].LockID' --output text 2>/dev/null || echo "No locks"
+      - run: |
           LOCK_ID="${{ github.event.inputs.lock_id }}"
-          echo "Attempting to unlock state with ID: $LOCK_ID"
           terraform force-unlock "$LOCK_ID" -force
 ```
 
