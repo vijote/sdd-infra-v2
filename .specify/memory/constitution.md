@@ -20,11 +20,12 @@ Write `tasks.md` as an acyclic dependency graph (DAG) where every task correspon
 `- [ ] T001 [Stage] Task description in path/to/file (Depends on Txxx)`
 
 ### 5. Machine-Verifiable Acceptance Gates
-Never use vague adjectives ("robust", "scalable", "fast"). All acceptance criteria MUST be machine-verifiable through automated commands:
+Never use vague adjectives ("robust", "scalable", "fast"). All acceptance criteria MUST be machine-verifiable through automated CI/CD commands:
 - Terraform validation & plan (`terraform validate`, `terraform plan -detailed-exitcode`)
 - Manifest & chart linting (`helm lint`, `kubectl apply --dry-run=client`, `kubeconform`)
 - Health probes, status rollouts (`kubectl rollout status`, `kubectl wait --for=condition=Ready`)
 - Endpoint & database connectivity checks (TLS handshake via cert-manager, MySQL connection & query exit codes)
+- **CRITICAL**: All acceptance criteria must be executable in GitHub Actions without manual intervention. No manual SSH, console access, or interactive commands.
 
 ### 6. Testing Policy
 - **No Unit Tests**: Do not generate unit test files (e.g., `*_test.go`, `*.spec.ts`, `__tests__/` directories)
