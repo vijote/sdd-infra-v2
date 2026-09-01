@@ -35,7 +35,9 @@
 
 ## 4. Verification Gates
 
-- **IaC Verification**: `terraform validate && terraform plan`
-- **Manifest Linting**: `helm lint [chart-path]` and `kubectl apply --dry-run=client -k [path]`
-- **Cluster Health Gate**: `kubectl get nodes -o wide` (All nodes Ready)
-- **Service Verification**: `kubectl rollout status` and health check commands
+- **IaC Validation**: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode`
+- **Manifest Validation**: `helm lint [chart-path] && kubectl apply --dry-run=client -f [manifest].yaml`
+- **Infrastructure Health**: `kubectl wait --for=condition=Ready nodes --all --timeout=300s`
+- **Service Rollout**: `kubectl rollout status deployment/[deployment-name] --timeout=600s`
+- **Endpoint Verification**: `curl -f -s [https-endpoint]/health || exit 1`
+- **Resource Verification**: `kubectl get pods -n [namespace] -l app=[app-label] --field-selector=status.phase=Running`
