@@ -27,7 +27,7 @@
 ## 4. Workflow-Specific Validation
 - [x] CHK015 Are all workflow triggers and permissions properly defined?
 - [x] CHK016 Are job dependencies and artifact passing correctly configured?
-- [x] CHK017 Are environment protection rules and approval gates in place?
+- [x] CHK017 Are automated deployment rules and validation gates configured (no manual approvals)?
 - [x] CHK018 Are secret injection patterns secure and validated?
 
 ## Notes

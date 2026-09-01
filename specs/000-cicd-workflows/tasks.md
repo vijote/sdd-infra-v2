@@ -4,30 +4,30 @@
 
 ## Stage 1: Workflow Setup & OIDC Authentication
 
-- [ ] T001 [Stage 1: GitHub Actions] Create main terraform-apply.yml workflow with OIDC authentication in .github/workflows/terraform-apply.yml
-- [ ] T002 [Stage 1: GitHub Actions] Create terraform-destroy.yml workflow with confirmation gate in .github/workflows/terraform-destroy.yml (Depends on T001)
-- [ ] T003 [Stage 1: GitHub Actions] Create terraform-unlock.yml workflow for state recovery in .github/workflows/terraform-unlock.yml (Depends on T001)
+- [x] T001 [Stage 1: GitHub Actions] Create main terraform-apply.yml workflow with OIDC authentication in .github/workflows/terraform-apply.yml
+- [x] T002 [Stage 1: GitHub Actions] Create terraform-destroy.yml workflow with confirmation gate in .github/workflows/terraform-destroy.yml (Depends on T001)
+- [x] T003 [Stage 1: GitHub Actions] Create terraform-unlock.yml workflow for state recovery in .github/workflows/terraform-unlock.yml (Depends on T001)
 
 ## Stage 2: State Backend Configuration
 
-- [ ] T004 [Stage 2: Terraform Backend] Configure S3 backend with S3 native locking in terraform/backend.tf
-- [ ] T005 [Stage 2: Terraform Variables] Add GitHub OIDC role ARN and state configuration variables in terraform/variables.tf (Depends on T004)
-- [ ] T006 [Stage 2: Terraform Root] Update root module to include all phase dependencies in terraform/main.tf (Depends on T005)
+- [x] T004 [Stage 2: Terraform Backend] Configure S3 backend with S3 native locking in terraform/backend.tf
+- [x] T005 [Stage 2: Terraform Variables] Add GitHub OIDC role ARN and state configuration variables in terraform/variables.tf (Depends on T004)
+- [x] T006 [Stage 2: Terraform Root] Update root module to include all phase dependencies in terraform/main.tf (Depends on T005)
 
 ## Stage 3: Validation & Planning
 
-- [ ] T007 [Stage 3: Validation] Add terraform fmt, validate, and plan steps to terraform-apply.yml workflow (Depends on T003)
-- [ ] T008 [Stage 3: Artifacts] Configure artifact storage for terraform plans in terraform-apply.yml workflow (Depends on T007)
+- [x] T007 [Stage 3: Validation] Add terraform fmt, validate, and plan steps to terraform-apply.yml workflow (Depends on T003)
+- [x] T008 [Stage 3: Artifacts] Configure artifact storage for terraform plans in terraform-apply.yml workflow (Depends on T007)
 
 ## Stage 4: Apply Execution & Security
 
-- [ ] T009 [Stage 4: Apply Job] Configure apply job with AWS credentials and secret injection in terraform-apply.yml (Depends on T008)
-- [ ] T010 [Stage 4: Automated Deployment] Configure automated deployment on main branch push in terraform-apply.yml workflow (Depends on T009)
+- [x] T009 [Stage 4: Apply Job] Configure apply job with AWS credentials and secret injection in terraform-apply.yml (Depends on T008)
+- [x] T010 [Stage 4: Automated Deployment] Configure automated deployment on main branch push in terraform-apply.yml workflow (Depends on T009)
 
 ## Stage 5: Post-Validation & Acceptance
 
-- [ ] T011 [Stage 5: Validation Script] Create automated validation script for post-deployment checks in specs/000-cicd-workflows/validate.sh (Depends on T010)
-- [ ] T012 [Stage 5: Output Reporting] Add output reporting and summary steps to terraform-apply.yml workflow (Depends on T011)
+- [x] T011 [Stage 5: Validation Script] Create automated validation script for post-deployment checks in specs/000-cicd-workflows/validate.sh (Depends on T010)
+- [x] T012 [Stage 5: Output Reporting] Add output reporting and summary steps to terraform-apply.yml workflow (Depends on T011)
 
 ## Acceptance Criteria Mapping
 

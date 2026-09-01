@@ -1,0 +1,83 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'GitHub OIDC Roles for SDD Kubernetes Platform - Must be deployed BEFORE Terraform'
+
+Parameters:
+  GitHubRepo:
+    Type: String
+    Description: 'GitHub repository in format org/repo'
+    Default: 'ji.dominguez/sdd-infra-v2'
+  
+  GitHubOIDCProviderArn:
+    Type: String
+    Description: 'GitHub OIDC Provider ARN'
+    Default: 'arn:aws:iam::aws:oidc-provider/token.actions.githubusercontent.com'
+
+Resources:
+  # Bootstrap Role - Limited to assuming target role only
+  GitHubBootstrapRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: github-actions-bootstrap-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOIDCProviderArn
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubRepo}:ref:refs/heads/main'
+      Policies:
+        - PolicyName: BootstrapAssumePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !GetAtt GitHubAssumeRole.Arn
+
+  # Target Role - Full infrastructure permissions
+  GitHubAssumeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: github-actions-assume-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt GitHubBootstrapRole.Arn
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess  # TODO: Scope down to specific permissions
+      Tags:
+        - Key: Purpose
+          Value: GitHub Actions Infrastructure Deployment
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  BootstrapRoleArn:
+    Description: 'ARN of the GitHub Bootstrap Role'
+    Value: !GetAtt GitHubBootstrapRole.Arn
+    Export:
+      Name: GitHubBootstrapRoleArn
+  
+  AssumeRoleArn:
+    Description: 'ARN of the GitHub Assume Role'
+    Value: !GetAtt GitHubAssumeRole.Arn
+    Export:
+      Name: GitHubAssumeRoleArn
+
+  BootstrapRoleName:
+    Description: 'Name of the GitHub Bootstrap Role'
+    Value: !Ref GitHubBootstrapRole
+    Export:
+      Name: GitHubBootstrapRoleName
+  
+  AssumeRoleName:
+    Description: 'Name of the GitHub Assume Role'
+    Value: !Ref GitHubAssumeRole
+    Export:
+      Name: GitHubAssumeRoleName

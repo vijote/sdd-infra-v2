@@ -68,4 +68,6 @@ All criteria MUST be machine-verifiable:
 - **Network CIDRs**: [VPC CIDR: 10.0.0.0/16, Pod CIDR: 192.168.0.0/16, Service CIDR: 10.96.0.0/12]
 - **IAM / Security Boundaries**: [Least-privilege IAM instance profile for control plane / workers]
 - **Storage / Backup Boundaries**: [EBS CSI volume snapshots or backup retention policy]
+- **External Prerequisites**: [Any AWS resources, roles, or configurations that must be created manually before Terraform execution]
+- **Circular Dependency Prevention**: [Resources required by Terraform must be provisioned externally (e.g., via CloudFormation, AWS Console, or AWS CLI)]
 - **Testing Policy**: No unit or E2E test generation - validation performed directly against AWS infrastructure using CLI tools
