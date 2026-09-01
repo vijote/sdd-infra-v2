@@ -33,6 +33,12 @@ Never use vague adjectives ("robust", "scalable", "fast"). All acceptance criter
 - **Direct AWS Validation**: All validation is performed directly against AWS infrastructure using native CLI tools and kubectl commands
 - **Context Optimization**: Exclude test generation to minimize context usage for LLM agents
 
+### 7. CI/CD Automation Policy
+- **No Manual Approval Gates**: All deployments must be fully automated on main branch push without manual intervention or approval workflows
+- **Automated Deployment**: Infrastructure changes are applied automatically through GitHub Actions with proper validation gates
+- **Security via Automation**: Security is enforced through automated OIDC authentication, least-privilege IAM roles, and machine-verifiable validation - not through manual approval processes
+- **Immutable Deployment**: Rollbacks and changes are handled through version-controlled infrastructure code, not manual intervention
+
 ## Session Isolation Protocol
 When implementing tasks with LLM agents, load only the minimal context payload:
 1. Directive: `.specify/memory/constitution.md`
@@ -42,4 +48,4 @@ When implementing tasks with LLM agents, load only the minimal context payload:
 ## Governance
 This constitution is the non-negotiable governing standard for all SpecKit artifacts in this repository. All PRs, plans, specifications, and task graphs must strictly adhere to these directives.
 
-**Version**: 2.0.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-08-31
+**Version**: 2.1.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-09-01

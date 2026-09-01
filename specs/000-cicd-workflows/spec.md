@@ -20,11 +20,6 @@ variable "state_bucket_name" {
   description = "S3 bucket for Terraform state"
   default     = "sdd-k8s-platform-terraform-state"
 }
-variable "state_lock_table_name" {
-  type        = string
-  description = "DynamoDB table for state locking"
-  default     = "terraform-locks"
-}
 ```
 
 ### 1.2 GitHub Actions Workflow Contracts
@@ -148,7 +143,7 @@ jobs:
 ```
 
 ### 1.3 Data & Storage Contracts
-- **State Management**: Single S3 bucket with DynamoDB locking for all phases
+- **State Management**: Single S3 bucket with S3 native locking for all phases
 - **Artifacts**: Terraform plans stored as GitHub Actions artifacts
 - **Secrets**: GitHub encrypted secrets for sensitive values
 
@@ -162,17 +157,15 @@ jobs:
 All criteria MUST be machine-verifiable in CI/CD:
 - [ ] AC-001: Apply workflow triggers on main push (`git checkout main && git commit --allow-empty -m "test" && git push && sleep 60 && gh run list --workflow=terraform-apply.yml --limit=1 | grep -q "success"`)
 - [ ] AC-002: All phases applied in single run (`gh run view --workflow=terraform-apply.yml --job=apply | grep -E "Phase[1-5]" | wc -l | grep -q '^5$'`)
-- [ ] AC-003: State locked during apply (`aws dynamodb get-item --table-name terraform-locks --key '{"LockID":{"S":"terraform"}}' --query 'Item.Info' --output text | grep -q "locked"`)
+- [ ] AC-003: State locked during apply (`aws s3api get-object-lock-configuration --bucket sdd-k8s-platform-terraform-state --key terraform.tfstate --query 'ObjectLockConfiguration.ObjectLockEnabled' --output text | grep -q "Enabled"`)
 - [ ] AC-004: Destroy workflow requires confirmation (`gh workflow run terraform-destroy.yml -f confirm=not_destroy && gh run list --workflow=terraform-destroy.yml --limit=1 | grep -q "failure"`)
-- [ ] AC-005: Unlock workflow releases state (`gh workflow run terraform-unlock.yml -f lock_id=$LOCK_ID && aws dynamodb get-item --table-name terraform-locks --key '{"LockID":{"S":"terraform"}}' 2>/dev/null && echo $? | grep -q '^1$'`)
+- [ ] AC-005: Unlock workflow releases state (`gh workflow run terraform-unlock.yml -f lock_id=$LOCK_ID && aws s3api get-object --bucket sdd-k8s-platform-terraform-state --key terraform.tfstate.lock --out /dev/null 2>/dev/null && echo $? | grep -q '^1$'`)
 - [ ] AC-006: Plan artifacts stored (`gh run view --workflow=terraform-apply.yml --job=validate | grep -q "terraform-plan"`)
 - [ ] AC-007: Secrets injected correctly (`gh run view --workflow=terraform-apply.yml --job=apply | grep -q "***" && echo $? | grep -q '^0$'`)
-- [ ] AC-008: Environment protection active (`gh api repos/:owner/:repo/environments/production | jq -r '.protection_rules[] | .type' | grep -q "required_reviewers"`)
 
 ## 3. Assumptions & Technical Constraints
 - **Single Apply**: All phases applied in one terraform apply from main configuration
 - **State Backend**: Centralized state for all phases, no per-phase isolation
 - **Job Dependencies**: Validate → Apply sequence with artifact passing
 - **IAM / Security Boundaries**: GitHub OIDC role with least-privilege permissions
-- **Testing Policy**: No unit or E2E test generation - validation performed directly against AWS infrastructure using CLI tools
 - **Provider Versions**: Terraform >= 1.5.0, GitHub Actions latest

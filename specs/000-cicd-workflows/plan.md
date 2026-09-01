@@ -16,10 +16,10 @@
 
 ## 2. Architectural Boundaries & Dependency Flow
 
-- **CI/CD Layer (GitHub Actions)**: OIDC authentication, workflow orchestration, artifact management, environment protection
-- **State Management Layer**: S3 bucket with versioning, DynamoDB table for state locking, centralized backend configuration
+- **CI/CD Layer (GitHub Actions)**: OIDC authentication, workflow orchestration, artifact management, automated deployment
+- **State Management Layer**: S3 bucket with versioning and S3 native locking, centralized backend configuration
 - **Infrastructure Orchestration**: Single terraform apply across all phases (001-005), job dependencies with artifact passing
-- **Security Boundaries**: GitHub OIDC trust relationship, production environment approval gates, secret injection
+- **Security Boundaries**: GitHub OIDC trust relationship, automated deployment on main push, secret injection
 - **Shared Dependencies**: Terraform >=1.5.0, AWS provider, GitHub Actions runners, state backend configuration
 
 ## 3. Provisioning & Rollout Stages
@@ -33,7 +33,7 @@
 ## 4. Verification Gates
 
 - **IaC Validation**: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode -out=tfplan`
-- **State Backend Access**: `aws s3 ls s3://sdd-k8s-platform-terraform-state && aws dynamodb describe-table --table-name terraform-locks --query 'Table.TableStatus' --output text | grep ACTIVE`
+- **State Backend Access**: `aws s3 ls s3://sdd-k8s-platform-terraform-state && aws s3api get-object-lock-configuration --bucket sdd-k8s-platform-terraform-state --key terraform.tfstate --query 'ObjectLockConfiguration.ObjectLockEnabled' --output text | grep Enabled`
 - **OIDC Role Assumption**: `aws sts get-caller-identity --query Account --output text`
 - **Terraform Apply Success**: `terraform apply -auto-approve tfplan && terraform output -json > outputs.json`
 - **Resource Creation**: `terraform output -raw vpc_id && terraform output -raw cluster_endpoint`
