@@ -1,6 +1,6 @@
 # Architecture Delta: CI/CD Workflows
 
-**Branch**: `000-cicd-workflows` | **Date**: 2026-09-01 | **Spec**: specs/000-cicd-workflows/spec.md
+**Branch**: `000-0-cicd-workflows` | **Date**: 2026-09-01 | **Spec**: specs/000-0-cicd-workflows/spec.md
 
 ## 1. Touch Points & File Impact Matrix
 
@@ -12,7 +12,7 @@
 | `terraform/backend.tf` | Modify | S3 backend configuration with DynamoDB locking |
 | `terraform/variables.tf` | Modify | GitHub OIDC role ARN and state configuration variables |
 | `terraform/main.tf` | Modify | Root module with all phase dependencies |
-| `specs/000-cicd-workflows/validate.sh` | Create | Post-deployment validation script |
+| `specs/000-0-cicd-workflows/validate.sh` | Create | Post-deployment validation script |
 
 ## 2. Architectural Boundaries & Dependency Flow
 

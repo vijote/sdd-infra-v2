@@ -1,6 +1,6 @@
 # Tasks: CI/CD Workflows
 
-**Branch**: `000-cicd-workflows` | **Date**: 2026-09-01 | **Total Tasks**: 12
+**Branch**: `000-0-cicd-workflows` | **Date**: 2026-09-01 | **Total Tasks**: 12
 
 ## Stage 1: Workflow Setup & OIDC Authentication
 
@@ -26,7 +26,7 @@
 
 ## Stage 5: Post-Validation & Acceptance
 
-- [x] T011 [Stage 5: Validation Script] Create automated validation script for post-deployment checks in specs/000-cicd-workflows/validate.sh (Depends on T010)
+- [x] T011 [Stage 5: Validation Script] Create automated validation script for post-deployment checks in specs/000-0-cicd-workflows/validate.sh (Depends on T010)
 - [x] T012 [Stage 5: Output Reporting] Add output reporting and summary steps to terraform-apply.yml workflow (Depends on T011)
 
 ## Acceptance Criteria Mapping
