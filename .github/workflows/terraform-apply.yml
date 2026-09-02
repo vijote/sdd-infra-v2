@@ -39,18 +39,22 @@ jobs:
           terraform_version: ">=1.5.0"
 
       - name: Terraform Format Check
+        working-directory: ./terraform
         run: terraform fmt -check -recursive
 
       - name: Terraform Init
+        working-directory: ./terraform
         run: terraform init
         env:
           TF_VAR_region: us-east-1
 
       - name: Terraform Validate
+        working-directory: ./terraform
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
+        working-directory: ./terraform
         run: |
           terraform plan -out=tfplan
           terraform show -json tfplan > plan.json
@@ -61,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan
-          path: tfplan
+          path: terraform/tfplan
           retention-days: 7
 
   apply:
@@ -88,8 +92,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: terraform-plan
+          path: terraform/
 
       - name: Terraform Apply
+        working-directory: ./terraform
         run: terraform apply -auto-approve tfplan
         env:
           TF_VAR_region: us-east-1
@@ -107,6 +113,7 @@ jobs:
           done
 
       - name: Capture Outputs
+        working-directory: ./terraform
         run: |
           terraform output -json > outputs.json
           echo "VPC_ID=$(terraform output -raw vpc_id)" >> $GITHUB_ENV
