@@ -29,23 +29,14 @@ jobs:
         with:
           terraform_version: ">=1.5.0"
 
-      - name: Configure AWS Credentials (Bootstrap)
+      - name: Configure AWS Credentials with Role Chaining
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.AWS_BOOTSTRAP_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-
-      - name: Assume Target Role
-        run: |
-          TARGET_ROLE=$(aws sts assume-role \
-            --role-arn ${{ env.AWS_ASSUME_ROLE_ARN }} \
-            --role-session-name github-actions \
-            --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
-            --output text)
-          read AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN <<< "$TARGET_ROLE"
-          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
-          echo "AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN" >> $GITHUB_ENV
+          role-chaining: true
+          role-duration-seconds: 3600
+          role-external-id: ${{ env.AWS_ASSUME_ROLE_ARN }}
 
       - name: Terraform Init
         run: terraform init

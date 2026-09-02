@@ -64,6 +64,7 @@ Resources:
             Condition:
               StringEquals:
                 aws:PrincipalArn: !GetAtt BootstrapRole.Arn
+                sts:ExternalId: !GetAtt AssumeRole.Arn
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/PowerUserAccess
       Policies:
