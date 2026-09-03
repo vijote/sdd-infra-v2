@@ -9,7 +9,6 @@ env:
 on:
   push:
     branches: [main]
-    paths: ['terraform/**']
   workflow_dispatch:
 
 permissions:
