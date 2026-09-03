@@ -1,6 +1,6 @@
 # Spec: S3 State Management Backend
 
-**Feature Branch**: `002-state-backend` | **Date**: 2026-09-01 | **Status**: Draft
+**Feature Branch**: `001-state-backend` | **Date**: 2026-09-01 | **Status**: Draft
 
 ## 1. Technical Scope & Infrastructure Contracts
 

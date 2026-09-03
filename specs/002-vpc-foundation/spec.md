@@ -1,6 +1,6 @@
 # Spec: VPC Foundation with CI/CD
 
-**Feature Branch**: `001-vpc-foundation` | **Date**: 2026-09-01 | **Status**: Draft
+**Feature Branch**: `002-vpc-foundation` | **Date**: 2026-09-01 | **Status**: Draft
 
 ## 1. Technical Scope & Infrastructure Contracts
 
