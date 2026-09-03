@@ -1,76 +1,23 @@
-name: Terraform Apply - Full Infrastructure
+name: Terraform Apply - State Backend
 
 env:
-  AWS_BOOTSTRAP_ROLE_ARN: ${{ vars.AWS_BOOTSTRAP_ROLE_ARN }}
-  AWS_ASSUME_ROLE_ARN: ${{ vars.AWS_ASSUME_ROLE_ARN }}
   AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_BOOTSTRAP_ROLE_ARN: ${{ vars.AWS_BOOTSTRAP_ROLE_ARN }}
+  AWS_TERRAFORM_ROLE: ${{ vars.AWS_TERRAFORM_ROLE }}
+  TF_VAR_state_bucket_name: ${{ vars.TF_VAR_state_bucket_name }}
 
 on:
   push:
     branches: [main]
-    paths: ['specs/**', 'src/**']
+    paths: ['terraform/**']
   workflow_dispatch:
-    inputs:
-      phase:
-        description: 'Phase to deploy'
-        required: false
-        default: 'all'
-        type: choice
-        options:
-          - all
-          - phase1
-          - phase2
-          - phase3
-          - phase4
-          - phase5
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
 
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    outputs:
-      phases: ${{ steps.plan.outputs.phases }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
-        with:
-          terraform_version: ">=1.5.0"
-
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
-
-      - name: Terraform Init
-        run: terraform init
-        env:
-          TF_VAR_region: ${{ env.AWS_REGION }}
-
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        id: plan
-        run: |
-          terraform plan -out=tfplan
-          terraform show -json tfplan > plan.json
-          phases=$(jq -r '.configuration.root_module.resources | map(.mode) | unique | join(",")' plan.json)
-          echo "phases=$phases" >> $GITHUB_OUTPUT
-
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: tfplan
-          retention-days: 7
-
   apply:
-    needs: validate
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: production
@@ -83,49 +30,24 @@ jobs:
         with:
           terraform_version: ">=1.5.0"
 
-      - name: Configure AWS Credentials with Role Chaining
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS Bootstrap Credentials
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ env.AWS_BOOTSTRAP_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-          role-chaining: true
-          role-duration-seconds: 3600
-          role-external-id: ${{ env.AWS_ASSUME_ROLE_ARN }}
 
-      - name: Download Terraform Plan
-        uses: actions/download-artifact@v4
+      - name: Assume Terraform Target Role
+        uses: aws-actions/configure-aws-credentials@v6
         with:
-          name: terraform-plan
+          role-to-assume: ${{ env.AWS_TERRAFORM_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-chaining: true
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tfplan
+        run: |
+          cd terraform/environments/dev
+          terraform init
+          terraform apply -auto-approve
         env:
+          TF_VAR_state_bucket_name: ${{ env.TF_VAR_state_bucket_name }}
           TF_VAR_region: ${{ env.AWS_REGION }}
-          TF_VAR_github_owner: ${{ github.repository_owner }}
-          TF_VAR_github_repo: ${{ github.event.repository.name }}
-          TF_VAR_mysql_root_password: ${{ secrets.MYSQL_ROOT_PASSWORD }}
-          TF_VAR_mysql_password: ${{ secrets.MYSQL_PASSWORD }}
-
-      - name: Run Validation Scripts
-        run: |
-          for phase in 001 002 003 004 005; do
-            if [ -f "specs/$phase-*/validate.sh" ]; then
-              bash "specs/$phase-*/validate.sh"
-            fi
-          done
-
-      - name: Capture Outputs
-        run: |
-          terraform output -json > outputs.json
-          echo "VPC_ID=$(terraform output -raw vpc_id)" >> $GITHUB_ENV
-          echo "CLUSTER_ENDPOINT=$(terraform output -raw cluster_endpoint)" >> $GITHUB_ENV
-          echo "APPLICATION_URL=$(terraform output -raw application_url)" >> $GITHUB_ENV
-
-      - name: Deployment Summary
-        run: |
-          echo "## 🎉 Infrastructure Deployed!" >> $GITHUB_STEP_SUMMARY
-          echo "| Resource | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
-          echo "| VPC | $VPC_ID |" >> $GITHUB_STEP_SUMMARY
-          echo "| Cluster | $CLUSTER_ENDPOINT |" >> $GITHUB_STEP_SUMMARY
-          echo "| App | $APPLICATION_URL |" >> $GITHUB_STEP_SUMMARY
