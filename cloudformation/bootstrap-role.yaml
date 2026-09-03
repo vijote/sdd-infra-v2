@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: GitHub Actions Bootstrap Role with OIDC Authentication
+
+Parameters:
+  GitHubOrg:
+    Type: String
+    Default: vijote
+    Description: GitHub organization name
+  GitHubRepo:
+    Type: String
+    Default: sdd-infra-v2
+    Description: GitHub repository name
+
+Resources:
+  # Bootstrap Role - OIDC Trust with Minimal Permissions
+  BootstrapRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: github-actions-bootstrap-role
+      Description: Bootstrap role for GitHub Actions with OIDC authentication and minimal assume role permissions
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${GitHubRepo}:*
+      Policies:
+        - PolicyName: BootstrapAssumeRolePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/github-actions-assume-role
+      Tags:
+        - Key: Purpose
+          Value: GitHubActionsBootstrap
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  BootstrapRoleArn:
+    Description: ARN of the bootstrap role for GitHub Actions
+    Value: !GetAtt BootstrapRole.Arn
+    Export:
+      Name: !Sub ${AWS::StackName}-BootstrapRoleArn
+  BootstrapRoleName:
+    Description: Name of the bootstrap role
+    Value: !Ref BootstrapRole
+    Export:
+      Name: !Sub ${AWS::StackName}-BootstrapRoleName

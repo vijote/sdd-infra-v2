@@ -1,3 +1,15 @@
+<!--
+Sync Impact Report:
+Version change: 2.2.0 → 2.3.0 (MINOR: Material expansion of testing policy guidance)
+Modified principles:
+- Section 6 (Testing Policy): Added "CRITICAL: No Testing Whatsoever" and "User-Managed Testing" principles
+- Section 6 (Testing Policy): Added "No Validation Steps" principle
+- Section 6 (Testing Policy): Changed "CI/CD Workflow Validation" to "No CI/CD Validation"
+Added sections: None
+Removed sections: None
+Follow-up TODOs: None
+-->
+
 # System & LLM Execution Directives
 
 ## Core Principles
@@ -26,11 +38,16 @@ Never use vague adjectives ("robust", "scalable", "fast"). All acceptance criter
 - Health probes, status rollouts (`kubectl rollout status`, `kubectl wait --for=condition=Ready`)
 - Endpoint & database connectivity checks (TLS handshake via cert-manager, MySQL connection & query exit codes)
 - **CRITICAL**: All acceptance criteria must be executable in GitHub Actions without manual intervention. No manual SSH, console access, or interactive commands.
+- **CRITICAL**: Validation commands are designed for CI/CD workflows, not local testing. No local AWS CLI, GitHub CLI, or other tooling required.
 
 ### 6. Testing Policy
+- **CRITICAL: No Testing Whatsoever**: Do not generate any testing, validation, verification, or echo statements in implementation code
+- **User-Managed Testing**: All testing is handled personally by the user - never add automated validation steps
+- **No Validation Steps**: Never add validation steps, echo statements, or CloudFormation connections in workflows
 - **No Unit Tests**: Do not generate unit test files (e.g., `*_test.go`, `*.spec.ts`, `__tests__/` directories)
 - **No E2E Tests**: Do not generate end-to-end test suites or integration test frameworks
-- **Direct AWS Validation**: All validation is performed directly against AWS infrastructure using native CLI tools and kubectl commands
+- **No CI/CD Validation**: Do not add validation commands to GitHub Actions workflows - user handles all validation
+- **No Local Tooling Required**: No local AWS CLI, GitHub CLI, kubectl, or other infrastructure tooling required
 - **Context Optimization**: Exclude test generation to minimize context usage for LLM agents
 
 ### 7. CI/CD Automation Policy
@@ -48,4 +65,4 @@ When implementing tasks with LLM agents, load only the minimal context payload:
 ## Governance
 This constitution is the non-negotiable governing standard for all SpecKit artifacts in this repository. All PRs, plans, specifications, and task graphs must strictly adhere to these directives.
 
-**Version**: 2.1.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-09-01
+**Version**: 2.3.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-09-02
