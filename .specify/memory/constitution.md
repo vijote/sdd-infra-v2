@@ -26,11 +26,13 @@ Never use vague adjectives ("robust", "scalable", "fast"). All acceptance criter
 - Health probes, status rollouts (`kubectl rollout status`, `kubectl wait --for=condition=Ready`)
 - Endpoint & database connectivity checks (TLS handshake via cert-manager, MySQL connection & query exit codes)
 - **CRITICAL**: All acceptance criteria must be executable in GitHub Actions without manual intervention. No manual SSH, console access, or interactive commands.
+- **CRITICAL**: Validation commands are designed for CI/CD workflows, not local testing. No local AWS CLI, GitHub CLI, or other tooling required.
 
 ### 6. Testing Policy
 - **No Unit Tests**: Do not generate unit test files (e.g., `*_test.go`, `*.spec.ts`, `__tests__/` directories)
 - **No E2E Tests**: Do not generate end-to-end test suites or integration test frameworks
-- **Direct AWS Validation**: All validation is performed directly against AWS infrastructure using native CLI tools and kubectl commands
+- **CI/CD Workflow Validation**: All validation is performed in GitHub Actions workflows (terraform-apply, terraform-destroy) before deployment
+- **No Local Tooling Required**: No local AWS CLI, GitHub CLI, kubectl, or other infrastructure tooling required for validation
 - **Context Optimization**: Exclude test generation to minimize context usage for LLM agents
 
 ### 7. CI/CD Automation Policy
@@ -48,4 +50,4 @@ When implementing tasks with LLM agents, load only the minimal context payload:
 ## Governance
 This constitution is the non-negotiable governing standard for all SpecKit artifacts in this repository. All PRs, plans, specifications, and task graphs must strictly adhere to these directives.
 
-**Version**: 2.1.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-09-01
+**Version**: 2.2.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-09-02
