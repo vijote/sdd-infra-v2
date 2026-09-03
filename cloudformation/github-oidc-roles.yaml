@@ -41,7 +41,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sts:AssumeRole
-                Resource: !GetAtt AssumeRole.Arn
+                Resource: !Ref AssumeRole
       Tags:
         - Key: Purpose
           Value: GitHubActionsBootstrap
@@ -59,12 +59,12 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              AWS: !GetAtt BootstrapRole.Arn
+              AWS: !Ref BootstrapRole
             Action: sts:AssumeRole
             Condition:
               StringEquals:
-                aws:PrincipalArn: !GetAtt BootstrapRole.Arn
-                sts:ExternalId: !GetAtt AssumeRole.Arn
+                aws:PrincipalArn: !Ref BootstrapRole
+                sts:ExternalId: !Ref AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/PowerUserAccess
       Policies:
