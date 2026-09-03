@@ -1,31 +1,34 @@
 # Technical Requirements Checklist
 
 ## Technical Contract Completeness
-- [ ] CHK001: CloudFormation resource contracts defined with explicit !Ref usage
-- [ ] CHK002: Bootstrap role OIDC trust relationship specified
-- [ ] CHK003: Assume role chaining trust relationship specified
-- [ ] CHK004: External ID validation condition documented
+- [ ] CHK001: Two-stack CloudFormation architecture defined with parameter-based references
+- [ ] CHK002: Bootstrap role OIDC trust relationship specified (no role dependencies)
+- [ ] CHK003: Assume role parameter-based trust relationship specified
+- [ ] CHK004: External ID validation condition documented (AWS account ID)
 - [ ] CHK005: Role session duration and security boundaries defined
 - [ ] CHK006: Repository variables and environment configuration specified
+- [ ] CHK007: Sequential deployment process documented (bootstrap → assume)
 
 ## Infrastructure & Security Hygiene
-- [ ] CHK007: Circular dependency resolution method clearly documented
-- [ ] CHK008: Bootstrap role minimal permissions (sts:AssumeRole only) maintained
-- [ ] CHK009: Assume role infrastructure deployment permissions specified
-- [ ] CHK010: External ID security boundary enforcement included
-- [ ] CHK011: OIDC subject filtering for GitHub repository configured
-- [ ] CHK012: Resource tagging and identification standards applied
+- [ ] CHK008: Circular dependency resolution method clearly documented (two-stack approach)
+- [ ] CHK009: Bootstrap role minimal permissions (sts:AssumeRole only) maintained
+- [ ] CHK010: Assume role infrastructure deployment permissions specified
+- [ ] CHK011: External ID security boundary enforcement included (account ID)
+- [ ] CHK012: OIDC subject filtering for GitHub repository configured
+- [ ] CHK013: Resource tagging and identification standards applied
+- [ ] CHK014: Parameter passing between stacks documented
 
 ## Machine-Verifiable Acceptance Gates
-- [ ] CHK013: CloudFormation validation command specified
-- [ ] CHK014: Circular dependency detection command included
-- [ ] CHK015: !Ref usage verification commands provided
-- [ ] CHK016: CloudFormation deployment command specified
-- [ ] CHK017: Role ARN export verification command included
-- [ ] CHK018: All acceptance criteria use executable CLI commands
+- [ ] CHK015: Bootstrap stack validation command specified
+- [ ] CHK016: Assume stack validation command specified
+- [ ] CHK017: Bootstrap stack deployment command specified
+- [ ] CHK018: Assume stack deployment command with parameter specified
+- [ ] CHK019: BootstrapRoleArn output extraction command included
+- [ ] CHK020: AssumeRoleArn output extraction command included
+- [ ] CHK021: All acceptance criteria use executable CLI commands
 
 ## Zero Narrative Policy Compliance
-- [ ] CHK019: Spec length under 200 lines (current: 88 lines)
-- [ ] CHK020: No conversational filler or marketing language
-- [ ] CHK021: All content is technical and actionable
-- [ ] CHK022: No redundant explanations or tutorials
+- [ ] CHK022: Spec length under 200 lines (current: 88 lines)
+- [ ] CHK023: No conversational filler or marketing language
+- [ ] CHK024: All content is technical and actionable
+- [ ] CHK025: No redundant explanations or tutorials

@@ -6,28 +6,32 @@
 
 | File Path | Operation (Create/Modify/Delete) | Purpose / Exports |
 | :--- | :--- | :--- |
-| `cloudformation/github-oidc-roles.yaml` | Modify | Replace !GetAtt with !Ref to resolve circular dependency between BootstrapRole and AssumeRole |
+| `cloudformation/bootstrap-role.yaml` | Create | BootstrapRole with OIDC trust, outputs BootstrapRoleArn |
+| `cloudformation/assume-role.yaml` | Create | AssumeRole with BootstrapRoleArn parameter, outputs AssumeRoleArn |
+| `cloudformation/github-oidc-roles.yaml` | Delete | Remove circular dependency template |
 
 ## 2. Architectural Boundaries & Dependency Flow
 
-- **CloudFormation Layer**: BootstrapRole (OIDC trust, minimal permissions) → AssumeRole (infrastructure permissions, external ID validation)
-- **Reference Resolution Layer**: !Ref instead of !GetAtt eliminates circular dependency while maintaining same functionality
-- **Security Boundaries**: External ID condition using assume role reference for cross-account security validation
-- **GitHub Actions Integration**: Role chaining with 1-hour session duration and repository variable configuration
+- **Stack 1 Layer**: BootstrapRole (OIDC trust, minimal permissions, no role dependencies)
+- **Parameter Bridge Layer**: BootstrapRoleArn passed as parameter to Stack 2 (eliminates resource reference)
+- **Stack 2 Layer**: AssumeRole (infrastructure permissions, accepts BootstrapRoleArn parameter)
+- **Security Boundaries**: External ID condition using AWS account ID for cross-account security
+- **GitHub Actions Integration**: Role chaining maintained, both role ARNs configured as repository variables
 
 ## 3. Provisioning & Rollout Stages
 
-1. **Stage 1 - CloudFormation Update**: Replace !GetAtt with !Ref in BootstrapRole policy (Resource: !Ref AssumeRole)
-2. **Stage 2 - CloudFormation Update**: Replace !GetAtt with !Ref in AssumeRole trust policy (AWS: !Ref BootstrapRole)
-3. **Stage 3 - CloudFormation Update**: Replace !GetAtt with !Ref in external ID condition (sts:ExternalId: !Ref AssumeRole)
-4. **Stage 4 - Validation**: CloudFormation template validation and deployment testing
-5. **Stage 5 - GitHub Configuration**: Update repository variables with new role ARNs after successful deployment
+1. **Stage 1 - Bootstrap Stack Creation**: Create `cloudformation/bootstrap-role.yaml` with BootstrapRole only
+2. **Stage 2 - Bootstrap Stack Deployment**: Deploy bootstrap stack and extract role ARN outputs
+3. **Stage 3 - Assume Stack Creation**: Create `cloudformation/assume-role.yaml` with AssumeRole and BootstrapRoleArn parameter
+4. **Stage 4 - Assume Stack Deployment**: Deploy assume stack with BootstrapRoleArn parameter
+5. **Stage 5 - Cleanup**: Remove old circular dependency template
+6. **Stage 6 - GitHub Configuration**: Update repository variables with both role ARNs
 
 ## 4. Verification Gates
 
-- **CloudFormation Validation**: `aws cloudformation validate-template --template-body file://cloudformation/github-oidc-roles.yaml`
-- **Circular Dependency Check**: `! grep -A 2 "Resource:" cloudformation/github-oidc-roles.yaml | grep "GetAtt"`
-- **Reference Verification**: `grep -q "Resource: !Ref AssumeRole" cloudformation/github-oidc-roles.yaml && grep -q "AWS: !Ref BootstrapRole" cloudformation/github-oidc-roles.yaml`
-- **External ID Check**: `grep -q "sts:ExternalId: !Ref AssumeRole" cloudformation/github-oidc-roles.yaml`
-- **Deployment Test**: `aws cloudformation deploy --stack-name github-oidc-roles --template-file cloudformation/github-oidc-roles.yaml --capabilities CAPABILITY_NAMED_IAM`
-- **Output Verification**: `aws cloudformation describe-stacks --stack-name github-oidc-roles --query "Stacks[0].Outputs" | grep -E "BootstrapRoleArn|AssumeRoleArn"`
+- **Bootstrap Stack Validation**: `aws cloudformation validate-template --template-body file://cloudformation/bootstrap-role.yaml`
+- **Bootstrap Stack Deployment**: `aws cloudformation deploy --stack-name github-oidc-bootstrap-role --template-file cloudformation/bootstrap-role.yaml --capabilities CAPABILITY_NAMED_IAM`
+- **Bootstrap Output Extraction**: `aws cloudformation describe-stacks --stack-name github-oidc-bootstrap-role --query "Stacks[0].Outputs[?OutputKey=='BootstrapRoleArn'].OutputValue" --output text`
+- **Assume Stack Validation**: `aws cloudformation validate-template --template-body file://cloudformation/assume-role.yaml`
+- **Assume Stack Deployment**: `aws cloudformation deploy --stack-name github-oidc-assume-role --template-file cloudformation/assume-role.yaml --parameter-overrides BootstrapRoleArn=<ARN> --capabilities CAPABILITY_NAMED_IAM`
+- **Role ARN Verification**: `aws cloudformation describe-stacks --stack-name github-oidc-assume-role --query "Stacks[0].Outputs" | grep -E "BootstrapRoleArn|AssumeRoleArn"`
