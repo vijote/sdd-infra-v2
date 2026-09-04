@@ -19,7 +19,9 @@ Resources:
           - Effect: Allow
             Principal:
               AWS: !Ref BootstrapRoleArn
-            Action: sts:AssumeRole
+            Action:
+              - sts:AssumeRole
+              - sts:TagSession
             Condition:
               StringEquals:
                 aws:PrincipalArn: !Ref BootstrapRoleArn
