@@ -44,7 +44,9 @@ jobs:
       - name: Terraform Apply
         run: |
           cd terraform/environments/dev
-          terraform init
+          terraform init \
+            -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
           terraform apply -auto-approve
         env:
           TF_VAR_state_bucket_name: ${{ env.TF_VAR_state_bucket_name }}
