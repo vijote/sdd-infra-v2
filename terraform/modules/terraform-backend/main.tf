@@ -1,18 +1,11 @@
-# S3 Bucket for Terraform State
-resource "aws_s3_bucket" "terraform_state" {
+# S3 Bucket for Terraform State (existing)
+data "aws_s3_bucket" "existing" {
   bucket = var.state_bucket_name
-
-  tags = {
-    Name        = "Terraform State Bucket"
-    Project     = "sdd-k8s-platform"
-    Phase       = "2"
-    Environment = "dev"
-  }
 }
 
 # Enable S3 bucket versioning
 resource "aws_s3_bucket_versioning" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = data.aws_s3_bucket.existing.id
 
   versioning_configuration {
     status = "Enabled"
@@ -21,7 +14,7 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
 
 # Enable S3 bucket server-side encryption with KMS
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = data.aws_s3_bucket.existing.id
 
   rule {
     apply_server_side_encryption_by_default {
@@ -32,7 +25,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
 
 # Block public access to S3 bucket
 resource "aws_s3_bucket_public_access_block" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = data.aws_s3_bucket.existing.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -62,7 +55,7 @@ resource "aws_kms_alias" "terraform_state" {
 
 # S3 bucket policy for HTTPS enforcement
 resource "aws_s3_bucket_policy" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = data.aws_s3_bucket.existing.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -73,8 +66,8 @@ resource "aws_s3_bucket_policy" "terraform_state" {
         Principal = "*"
         Action    = "s3:*"
         Resource = [
-          aws_s3_bucket.terraform_state.arn,
-          "${aws_s3_bucket.terraform_state.arn}/*"
+          data.aws_s3_bucket.existing.arn,
+          "${data.aws_s3_bucket.existing.arn}/*"
         ]
         Condition = {
           Bool = {
@@ -110,7 +103,7 @@ resource "aws_s3_bucket_public_access_block" "terraform_state_logs" {
 
 # Enable S3 access logging
 resource "aws_s3_bucket_logging" "terraform_state" {
-  bucket = aws_s3_bucket.terraform_state.id
+  bucket = data.aws_s3_bucket.existing.id
 
   target_bucket = aws_s3_bucket.terraform_state_logs.id
   target_prefix = "log/"
