@@ -6,10 +6,6 @@ Parameters:
     Type: String
     Default: vijote
     Description: GitHub organization name
-  GitHubRepo:
-    Type: String
-    Default: sdd-infra-v2
-    Description: GitHub repository name
 
 Resources:
   # Bootstrap Role - OIDC Trust with Minimal Permissions
@@ -29,7 +25,7 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOrg}/${GitHubRepo}:*
+                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrg}*'
       Policies:
         - PolicyName: BootstrapAssumeRolePolicy
           PolicyDocument:

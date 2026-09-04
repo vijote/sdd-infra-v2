@@ -19,11 +19,9 @@ Resources:
           - Effect: Allow
             Principal:
               AWS: !Ref BootstrapRoleArn
-            Action: sts:AssumeRole
-            Condition:
-              StringEquals:
-                aws:PrincipalArn: !Ref BootstrapRoleArn
-                sts:ExternalId: !Ref AWS::AccountId
+            Action:
+              - sts:AssumeRole
+              - sts:TagSession
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/PowerUserAccess
       Policies:
