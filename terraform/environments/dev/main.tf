@@ -30,3 +30,18 @@ module "cluster_plumbing" {
     Phase   = "3"
   }
 }
+
+module "control_plane" {
+  source = "../../modules/control-plane"
+
+  region                           = var.region
+  vpc_id                           = module.vpc.vpc_id
+  private_subnet_ids               = module.vpc.private_subnet_ids
+  control_plane_security_group_id  = module.cluster_plumbing.control_plane_security_group_id
+  node_iam_instance_profile_name   = module.cluster_plumbing.node_iam_instance_profile_name
+
+  tags = {
+    Project = "sdd-k8s-platform"
+    Phase   = "3"
+  }
+}
