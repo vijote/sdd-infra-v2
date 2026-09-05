@@ -21,13 +21,13 @@
 
 ## Stage 2: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T002 [Stage 2: Verification] Lint workflow YAML (`actionlint .github/workflows/terraform-destroy.yml`) in CI (Depends on T001) — AC-001
-- [ ] T003 [Stage 2: Verification] Verify `-backend-config="bucket=` present in CI (Depends on T001) — AC-002
-- [ ] T004 [Stage 2: Verification] Verify `cd terraform/environments/dev` present in CI (Depends on T001) — AC-003
-- [ ] T005 [Stage 2: Verification] Verify `role-chaining: true` present AND `role-external-id` absent in CI (Depends on T001) — AC-004
-- [ ] T006 [Stage 2: Verification] Verify `TF_VAR_state_bucket_name` present in CI (Depends on T001) — AC-005
-- [ ] T007 [Stage 2: Verification] Verify stale vars (`TF_VAR_mysql_root_password`, `TF_VAR_mysql_password`, `TF_VAR_github_owner`, `TF_VAR_github_repo`) all absent in CI (Depends on T001) — AC-006
-- [ ] T008 [Stage 2: Verification] Verify `github.event.inputs.confirm` gate retained in CI (Depends on T001) — AC-007
+- [x] T002 [Stage 2: Verification] Lint workflow YAML (`actionlint .github/workflows/terraform-destroy.yml`) in CI (Depends on T001) — AC-001
+- [x] T003 [Stage 2: Verification] Verify `-backend-config="bucket=` present in CI (Depends on T001) — AC-002
+- [x] T004 [Stage 2: Verification] Verify `cd terraform/environments/dev` present in CI (Depends on T001) — AC-003
+- [x] T005 [Stage 2: Verification] Verify `role-chaining: true` present AND `role-external-id` absent in CI (Depends on T001) — AC-004
+- [x] T006 [Stage 2: Verification] Verify `TF_VAR_state_bucket_name` present in CI (Depends on T001) — AC-005
+- [x] T007 [Stage 2: Verification] Verify stale vars (`TF_VAR_mysql_root_password`, `TF_VAR_mysql_password`, `TF_VAR_github_owner`, `TF_VAR_github_repo`) all absent in CI (Depends on T001) — AC-006
+- [x] T008 [Stage 2: Verification] Verify `github.event.inputs.confirm` gate retained in CI (Depends on T001) — AC-007
 
 ---
 
