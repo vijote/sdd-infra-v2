@@ -1,8 +1,3 @@
-variable "state_bucket_name" {
-  type        = string
-  description = "S3 bucket name for Terraform state"
-}
-
 variable "region" {
   type        = string
   description = "AWS region"
@@ -19,4 +14,10 @@ variable "availability_zones" {
   type        = list(string)
   description = "List of availability zones"
   default     = ["us-east-1a", "us-east-1b", "us-east-1c"]
+}
+
+variable "tags" {
+  type        = map(string)
+  description = "Tags applied to all VPC resources"
+  default     = {}
 }
