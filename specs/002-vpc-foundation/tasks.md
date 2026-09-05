@@ -15,18 +15,18 @@
 
 ## Stage 1: VPC Module
 
-- [ ] T001 [Stage 1: VPC Module] Declare Terraform >= 1.5.0, AWS provider >= 5.0.0, and provider config in `terraform/modules/vpc/versions.tf`
-- [ ] T002 [Stage 1: VPC Module] Define input variables (region, vpc_cidr, availability_zones, tags) in `terraform/modules/vpc/variables.tf`
-- [ ] T003 [Stage 1: VPC Module] Implement VPC, 3 public + 3 private subnets, IGW, single NAT GW (public subnet 1), EIP, 2 route tables, 6 associations in `terraform/modules/vpc/main.tf` (Depends on T001, T002)
-- [ ] T004 [Stage 1: VPC Module] Export outputs (vpc_id, public_subnet_ids, private_subnet_ids, nat_gateway_id) in `terraform/modules/vpc/outputs.tf` (Depends on T003)
+- [x] T001 [Stage 1: VPC Module] Declare Terraform >= 1.5.0, AWS provider >= 5.0.0, and provider config in `terraform/modules/vpc/versions.tf`
+- [x] T002 [Stage 1: VPC Module] Define input variables (region, vpc_cidr, availability_zones, tags) in `terraform/modules/vpc/variables.tf`
+- [x] T003 [Stage 1: VPC Module] Implement VPC, 3 public + 3 private subnets, IGW, single NAT GW (public subnet 1), EIP, 2 route tables, 6 associations in `terraform/modules/vpc/main.tf` (Depends on T001, T002)
+- [x] T004 [Stage 1: VPC Module] Export outputs (vpc_id, public_subnet_ids, private_subnet_ids, nat_gateway_id) in `terraform/modules/vpc/outputs.tf` (Depends on T003)
 
 ---
 
 ## Stage 2: Dev Environment Wiring
 
-- [ ] T005 [Stage 2: Dev Env] Add input variables vpc_cidr (default `10.0.0.0/16`) and availability_zones (default 3 AZs) in `terraform/environments/dev/variables.tf`
-- [ ] T006 [Stage 2: Dev Env] Add `module "vpc"` instantiation (source `../../modules/vpc`) in `terraform/environments/dev/main.tf` (Depends on T004, T005)
-- [ ] T007 [Stage 2: Dev Env] Create root outputs (vpc_id, private_subnet_ids) for downstream phases in `terraform/environments/dev/outputs.tf` (Depends on T006)
+- [x] T005 [Stage 2: Dev Env] Add input variables vpc_cidr (default `10.0.0.0/16`) and availability_zones (default 3 AZs) in `terraform/environments/dev/variables.tf`
+- [x] T006 [Stage 2: Dev Env] Add `module "vpc"` instantiation (source `../../modules/vpc`) in `terraform/environments/dev/main.tf` (Depends on T004, T005)
+- [x] T007 [Stage 2: Dev Env] Create root outputs (vpc_id, private_subnet_ids) for downstream phases in `terraform/environments/dev/outputs.tf` (Depends on T006)
 
 ---
 
