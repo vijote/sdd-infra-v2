@@ -14,16 +14,16 @@
 
 ## Stage 2: Stack Update (user-managed — never by the agent)
 
-- [ ] T002 [Stage 2: Deploy] Update the assume-role CloudFormation stack with the corrected template (`aws cloudformation update-stack --stack-name <assume-role-stack> --template-body file://cloudformation/assume-role.yaml --capabilities CAPABILITY_NAMED_IAM`) (Depends on T001) - *User-managed*
+- [x] T002 [Stage 2: Deploy] Update the assume-role CloudFormation stack with the corrected template (`aws cloudformation update-stack --stack-name <assume-role-stack> --template-body file://cloudformation/assume-role.yaml --capabilities CAPABILITY_NAMED_IAM`) (Depends on T001) - *User-managed*
 
 ---
 
 ## Stage 3: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T003 [Stage 3: Verify] AC-001: Template declares the policy (`grep -q 'PolicyName: TerraformIamAccess' cloudformation/assume-role.yaml && grep -q 'iam:\*' cloudformation/assume-role.yaml`) (Depends on T001)
-- [ ] T004 [Stage 3: Verify] AC-002: Policy attached to the live role (`aws iam get-role-policy --role-name github-actions-assume-role --policy-name TerraformIamAccess --query 'RolePolicy.PolicyDocument.Statement[0].Action' --output text | grep -q 'iam:\*'`) (Depends on T002)
-- [ ] T005 [Stage 3: Verify] AC-003: 003-1 IAM role exists after re-run of apply (`aws iam get-role --role-name sdd-k8s-platform-node-role --query 'Role.Arn' --output text`) (Depends on T002)
-- [ ] T006 [Stage 3: Verify] AC-004: Instance profile references the role (`aws iam get-instance-profile --instance-profile-name sdd-k8s-platform-node-profile --query 'InstanceProfile.Roles[0].Arn' --output text | grep -q 'sdd-k8s-platform-node-role'`) (Depends on T005)
+- [x] T003 [Stage 3: Verify] AC-001: Template declares the policy (`grep -q 'PolicyName: TerraformIamAccess' cloudformation/assume-role.yaml && grep -q 'iam:\*' cloudformation/assume-role.yaml`) (Depends on T001)
+- [x] T004 [Stage 3: Verify] AC-002: Policy attached to the live role (`aws iam get-role-policy --role-name github-actions-assume-role --policy-name TerraformIamAccess --query 'RolePolicy.PolicyDocument.Statement[0].Action' --output text | grep -q 'iam:\*'`) (Depends on T002)
+- [x] T005 [Stage 3: Verify] AC-003: 003-1 IAM role exists after re-run of apply (`aws iam get-role --role-name sdd-k8s-platform-node-role --query 'Role.Arn' --output text`) (Depends on T002)
+- [x] T006 [Stage 3: Verify] AC-004: Instance profile references the role (`aws iam get-instance-profile --instance-profile-name sdd-k8s-platform-node-profile --query 'InstanceProfile.Roles[0].Arn' --output text | grep -q 'sdd-k8s-platform-node-role'`) (Depends on T005)
 
 ---
 
