@@ -19,9 +19,9 @@
 
 ## Stage 2: Bootstrap Stack Deployment
 
-- [ ] T002 [Stage 2: Bootstrap Stack] Validate bootstrap stack template (`aws cloudformation validate-template --template-body file://cloudformation/bootstrap-role.yaml`) (Depends on T001) - *Requires AWS credentials*
-- [ ] T003 [Stage 2: Bootstrap Stack] Deploy bootstrap stack (`aws cloudformation deploy --stack-name github-oidc-bootstrap-role --template-file cloudformation/bootstrap-role.yaml --capabilities CAPABILITY_NAMED_IAM`) (Depends on T002) - *Requires AWS credentials*
-- [ ] T004 [Stage 2: Bootstrap Stack] Extract BootstrapRoleArn from stack outputs (`aws cloudformation describe-stacks --stack-name github-oidc-bootstrap-role --query "Stacks[0].Outputs[?OutputKey=='BootstrapRoleArn'].OutputValue" --output text`) (Depends on T003) - *Requires AWS deployment completion*
+- [x] T002 [Stage 2: Bootstrap Stack] Validate bootstrap stack template (`aws cloudformation validate-template --template-body file://cloudformation/bootstrap-role.yaml`) (Depends on T001) - *User-managed*
+- [x] T003 [Stage 2: Bootstrap Stack] Deploy bootstrap stack (`aws cloudformation deploy --stack-name github-oidc-bootstrap-role --template-file cloudformation/bootstrap-role.yaml --capabilities CAPABILITY_NAMED_IAM`) (Depends on T002) - *User-managed*
+- [x] T004 [Stage 2: Bootstrap Stack] Extract BootstrapRoleArn from stack outputs (`aws cloudformation describe-stacks --stack-name github-oidc-bootstrap-role --query "Stacks[0].Outputs[?OutputKey=='BootstrapRoleArn'].OutputValue" --output text`) (Depends on T003) - *User-managed*
 
 ---
 
@@ -33,9 +33,9 @@
 
 ## Stage 4: Assume Stack Deployment
 
-- [ ] T006 [Stage 4: Assume Stack] Validate assume stack template (`aws cloudformation validate-template --template-body file://cloudformation/assume-role.yaml`) (Depends on T005) - *Requires AWS credentials*
-- [ ] T007 [Stage 4: Assume Stack] Deploy assume stack with BootstrapRoleArn parameter (`aws cloudformation deploy --stack-name github-oidc-assume-role --template-file cloudformation/assume-role.yaml --parameter-overrides BootstrapRoleArn=<ARN> --capabilities CAPABILITY_NAMED_IAM`) (Depends on T006) - *Requires AWS credentials and BootstrapRoleArn from T004*
-- [ ] T008 [Stage 4: Assume Stack] Extract AssumeRoleArn from stack outputs (`aws cloudformation describe-stacks --stack-name github-oidc-assume-role --query "Stacks[0].Outputs[?OutputKey=='AssumeRoleArn'].OutputValue" --output text`) (Depends on T007) - *Requires AWS deployment completion*
+- [x] T006 [Stage 4: Assume Stack] Validate assume stack template (`aws cloudformation validate-template --template-body file://cloudformation/assume-role.yaml`) (Depends on T005) - *User-managed*
+- [x] T007 [Stage 4: Assume Stack] Deploy assume stack with BootstrapRoleArn parameter (`aws cloudformation deploy --stack-name github-oidc-assume-role --template-file cloudformation/assume-role.yaml --parameter-overrides BootstrapRoleArn=<ARN> --capabilities CAPABILITY_NAMED_IAM`) (Depends on T006) - *User-managed*
+- [x] T008 [Stage 4: Assume Stack] Extract AssumeRoleArn from stack outputs (`aws cloudformation describe-stacks --stack-name github-oidc-assume-role --query "Stacks[0].Outputs[?OutputKey=='AssumeRoleArn'].OutputValue" --output text`) (Depends on T007) - *User-managed*
 
 ---
 
@@ -47,8 +47,8 @@
 
 ## Stage 6: GitHub Configuration
 
-- [ ] T010 [Stage 6: GitHub] Update GitHub repository variable AWS_BOOTSTRAP_ROLE_ARN with BootstrapRoleArn from T004 (Depends on T004)
-- [ ] T011 [Stage 6: GitHub] Update GitHub repository variable AWS_ASSUME_ROLE_ARN with AssumeRoleArn from T008 (Depends on T008)
+- [x] T010 [Stage 6: GitHub] Update GitHub repository variable AWS_BOOTSTRAP_ROLE_ARN with BootstrapRoleArn from T004 (Depends on T004) - *User-managed*
+- [x] T011 [Stage 6: GitHub] Update GitHub repository variable AWS_ASSUME_ROLE_ARN with AssumeRoleArn from T008 (Depends on T008) - *User-managed*
 
 ---
 
