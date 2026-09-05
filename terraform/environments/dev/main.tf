@@ -17,3 +17,16 @@ module "vpc" {
     Phase   = "1"
   }
 }
+
+module "cluster_plumbing" {
+  source = "../../modules/cluster-plumbing"
+
+  region   = var.region
+  vpc_id   = module.vpc.vpc_id
+  vpc_cidr = var.vpc_cidr
+
+  tags = {
+    Project = "sdd-k8s-platform"
+    Phase   = "3"
+  }
+}
