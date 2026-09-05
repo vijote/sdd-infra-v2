@@ -1,11 +1,9 @@
 <!--
 Sync Impact Report:
-Version change: 2.2.0 → 2.3.0 (MINOR: Material expansion of testing policy guidance)
-Modified principles:
-- Section 6 (Testing Policy): Added "CRITICAL: No Testing Whatsoever" and "User-Managed Testing" principles
-- Section 6 (Testing Policy): Added "No Validation Steps" principle
-- Section 6 (Testing Policy): Changed "CI/CD Workflow Validation" to "No CI/CD Validation"
-Added sections: None
+Version change: 2.3.0 → 2.4.0 (MINOR: New principle added)
+Modified principles: None
+Added sections:
+- Section 8 (Prefer GitHub Actions Over Raw Commands)
 Removed sections: None
 Follow-up TODOs: None
 -->
@@ -56,6 +54,11 @@ Never use vague adjectives ("robust", "scalable", "fast"). All acceptance criter
 - **Security via Automation**: Security is enforced through automated OIDC authentication, least-privilege IAM roles, and machine-verifiable validation - not through manual approval processes
 - **Immutable Deployment**: Rollbacks and changes are handled through version-controlled infrastructure code, not manual intervention
 
+### 8. Prefer GitHub Actions Over Raw Commands
+- **Workflow-First Execution**: Infrastructure operations (deployment, validation, state management) MUST be expressed as GitHub Actions workflows rather than raw local commands whenever possible
+- **Raw Commands as Definitions Only**: Raw CLI invocations (`aws`, `terraform`, `kubectl`) are permitted only as steps inside workflow definitions or as user-managed operations outside agent scope
+- **Rationale**: Reproducible, auditable, machine-verifiable execution with no dependency on local tooling, credentials, or environment state
+
 ## Session Isolation Protocol
 When implementing tasks with LLM agents, load only the minimal context payload:
 1. Directive: `.specify/memory/constitution.md`
@@ -65,4 +68,4 @@ When implementing tasks with LLM agents, load only the minimal context payload:
 ## Governance
 This constitution is the non-negotiable governing standard for all SpecKit artifacts in this repository. All PRs, plans, specifications, and task graphs must strictly adhere to these directives.
 
-**Version**: 2.3.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-09-02
+**Version**: 2.4.0 | **Ratified**: 2026-08-31 | **Last Amended**: 2026-09-05
