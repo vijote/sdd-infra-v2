@@ -24,12 +24,12 @@
 
 ## Stage 3: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T007 [Stage 3: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T006)
-- [ ] T008 [Stage 3: Verify] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`) (Depends on T007)
-- [ ] T009 [Stage 3: Verify] AC-003: Control plane SG exists with 6443 ingress from VPC CIDR (Depends on T008)
-- [ ] T010 [Stage 3: Verify] AC-004: Worker SG exists with 30000-32767 ingress from VPC CIDR (Depends on T008)
-- [ ] T011 [Stage 3: Verify] AC-005: IAM instance profile exists and attaches a role (Depends on T008)
-- [ ] T012 [Stage 3: Verify] AC-006: IAM role has SSM managed policy attached (Depends on T011)
+- [x] T007 [Stage 3: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T006)
+- [x] T008 [Stage 3: Verify] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`) (Depends on T007)
+- [x] T009 [Stage 3: Verify] AC-003: Control plane SG exists with 6443 ingress from VPC CIDR (Depends on T008)
+- [x] T010 [Stage 3: Verify] AC-004: Worker SG exists with 30000-32767 ingress from VPC CIDR (Depends on T008)
+- [x] T011 [Stage 3: Verify] AC-005: IAM instance profile exists and attaches a role (Depends on T008)
+- [x] T012 [Stage 3: Verify] AC-006: IAM role has SSM managed policy attached (Depends on T011)
 
 ---
 
