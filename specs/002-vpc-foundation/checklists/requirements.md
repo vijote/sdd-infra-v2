@@ -15,7 +15,7 @@
 ## 2. Infrastructure & Security Hygiene
 - [~] CHK007 Are IAM roles bounded to least-privilege policies for control-plane and worker instances? — N/A (CI/CD roles managed by CloudFormation, see `000-8-cloudformation-circular-dependency-fix`)
 - [~] CHK008 Is GitHub OIDC trust relationship properly configured with correct subject and condition filters? — N/A (OIDC trust managed by CloudFormation, see `000-8-cloudformation-circular-dependency-fix`)
-- [~] CHK009 Are Security Group ingress/egress rules constrained to required cluster and service CIDRs/ports? — N/A (cluster SGs deferred to `003-compute-cluster`)
+- [~] CHK009 Are Security Group ingress/egress rules constrained to required cluster and service CIDRs/ports? — N/A (cluster SGs deferred to `003-1-cluster-plumbing`)
 - [~] CHK010 Are TLS termination and cert-manager ClusterIssuer ACME/HTTP01 challenge specs defined? — N/A (VPC-only phase)
 - [~] CHK011 Are persistent storage retention policies and backup mechanisms specified? — N/A (VPC-only phase)
 

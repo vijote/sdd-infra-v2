@@ -67,7 +67,7 @@ None for Phase 1
 - **Public Subnets**: 10.0.1.0/24, 10.0.2.0/24, 10.0.3.0/24
 - **Private Subnets**: 10.0.11.0/24, 10.0.12.0/24, 10.0.13.0/24
 - **NAT Gateway**: Single NAT GW in public subnet 10.0.1.0/24 (dev environment, cost-optimized)
-- **Security Groups**: None for Phase 1 (cluster SGs deferred to `003-compute-cluster`)
+- **Security Groups**: None for Phase 1 (cluster SGs deferred to `003-1-cluster-plumbing`)
 
 ## 2. Technical Acceptance Criteria
 

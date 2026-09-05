@@ -18,8 +18,8 @@
 
 - **Infrastructure Layer (AWS & Terraform)**: VPC `10.0.0.0/16`, public subnets `10.0.1.0/24`-`10.0.3.0/24`, private subnets `10.0.11.0/24`-`10.0.13.0/24`, IGW, single NAT GW in `10.0.1.0/24`
 - **Routing**: Public route table (0.0.0.0/0 → IGW) for 3 public subnets; private route table (0.0.0.0/0 → NAT GW) for 3 private subnets
-- **Out of Scope (deferred)**: Security groups → `003-compute-cluster`; CI/CD IAM roles → CloudFormation (`000-8-cloudformation-circular-dependency-fix`)
-- **Downstream Consumers**: `003-compute-cluster` consumes `vpc_id` + `private_subnet_ids` for control plane and worker nodes
+- **Out of Scope (deferred)**: Security groups → `003-1-cluster-plumbing`; CI/CD IAM roles → CloudFormation (`000-8-cloudformation-circular-dependency-fix`)
+- **Downstream Consumers**: `003-1-cluster-plumbing` (SGs), `003-2-control-plane` and `003-3-worker-nodes` (EC2) consume `vpc_id` + `private_subnet_ids`
 - **Shared Dependencies**: AWS provider >= 5.0.0, Terraform >= 1.5.0, S3 state backend from `001-state-backend`
 
 ## 3. Provisioning & Rollout Stages
