@@ -37,6 +37,15 @@ Resources:
                   - !Sub arn:aws:s3:::sdd-k8s-platform-terraform-state
                   - !Sub arn:aws:s3:::sdd-k8s-platform-terraform-state/*
                   - !Sub arn:aws:dynamodb:*:${AWS::AccountId}:table/sdd-k8s-platform-terraform-state-lock
+        - PolicyName: TerraformIamAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:*
+                Resource:
+                  - "*"
       Tags:
         - Key: Purpose
           Value: GitHubActionsAssume
