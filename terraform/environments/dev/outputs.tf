@@ -27,3 +27,13 @@ output "node_iam_instance_profile_name" {
   value       = module.cluster_plumbing.node_iam_instance_profile_name
   description = "IAM instance profile name for EKS worker nodes"
 }
+
+output "control_plane_instance_id" {
+  value       = module.control_plane.control_plane_instance_id
+  description = "Control plane EC2 instance ID"
+}
+
+output "control_plane_private_ip" {
+  value       = module.control_plane.control_plane_private_ip
+  description = "Control plane private IP (API server endpoint, consumed by 003-3)"
+}

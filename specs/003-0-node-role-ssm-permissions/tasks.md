@@ -14,10 +14,10 @@
 
 ## Stage 2: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T002 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001)
-- [ ] T003 [Stage 2: Verify] AC-002: Terraform plan generates the inline policy (`terraform plan -detailed-exitcode`) (Depends on T002)
-- [ ] T004 [Stage 2: Verify] AC-003: Inline policy attached to the live role with `ssm:PutParameter` (`aws iam get-role-policy --role-name sdd-k8s-platform-node-role --policy-name sdd-k8s-platform-node-ssm-parameters --query 'RolePolicy.PolicyDocument.Statement[0].Action' --output text | grep -q 'ssm:PutParameter'`) (Depends on T003)
-- [ ] T005 [Stage 2: Verify] AC-004: Policy resource scoped to `parameter/sdd-k8s-platform/*` (`aws iam get-role-policy --role-name sdd-k8s-platform-node-role --policy-name sdd-k8s-platform-node-ssm-parameters --query 'RolePolicy.PolicyDocument.Statement[0].Resource[0]' --output text | grep -q 'parameter/sdd-k8s-platform/\*'`) (Depends on T004)
+- [x] T002 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001)
+- [x] T003 [Stage 2: Verify] AC-002: Terraform plan generates the inline policy (`terraform plan -detailed-exitcode`) (Depends on T002)
+- [x] T004 [Stage 2: Verify] AC-003: Inline policy attached to the live role with `ssm:PutParameter` (`aws iam get-role-policy --role-name sdd-k8s-platform-node-role --policy-name sdd-k8s-platform-node-ssm-parameters --query 'RolePolicy.PolicyDocument.Statement[0].Action' --output text | grep -q 'ssm:PutParameter'`) (Depends on T003)
+- [x] T005 [Stage 2: Verify] AC-004: Policy resource scoped to `parameter/sdd-k8s-platform/*` (`aws iam get-role-policy --role-name sdd-k8s-platform-node-role --policy-name sdd-k8s-platform-node-ssm-parameters --query 'RolePolicy.PolicyDocument.Statement[0].Resource[0]' --output text | grep -q 'parameter/sdd-k8s-platform/\*'`) (Depends on T004)
 
 ---
 
