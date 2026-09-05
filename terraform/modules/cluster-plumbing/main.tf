@@ -110,6 +110,22 @@ resource "aws_iam_role_policy_attachment" "node_ecr" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+# Inline policy: Parameter Store read/write for the kubeadm join command channel
+# (003-2 control plane publishes, 003-3 workers read)
+resource "aws_iam_role_policy" "node_ssm_parameters" {
+  name = "sdd-k8s-platform-node-ssm-parameters"
+  role = aws_iam_role.node.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ssm:PutParameter", "ssm:GetParameter"]
+      Resource = "arn:aws:ssm:*:*:parameter/sdd-k8s-platform/*"
+    }]
+  })
+}
+
 # Instance profile for worker nodes
 resource "aws_iam_instance_profile" "node" {
   name = "sdd-k8s-platform-node-profile"

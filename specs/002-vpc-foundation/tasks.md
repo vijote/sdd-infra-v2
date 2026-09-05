@@ -32,13 +32,13 @@
 
 ## Stage 3: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T008 [Stage 3: Verification] Run IaC validation (`terraform fmt -check -recursive && terraform validate`) in CI (Depends on T007) — AC-001
-- [ ] T009 [Stage 3: Verification] Run `terraform plan -detailed-exitcode` in CI (Depends on T008) — AC-002
-- [ ] T010 [Stage 3: Verification] Verify VPC CIDR = `10.0.0.0/16` via `aws ec2 describe-vpcs` in CI (Depends on T009) — AC-003
-- [ ] T011 [Stage 3: Verification] Verify 6 subnets (3 public + 3 private) via `aws ec2 describe-subnets` in CI (Depends on T009) — AC-004
-- [ ] T012 [Stage 3: Verification] Verify IGW attached via `aws ec2 describe-internet-gateways` in CI (Depends on T009) — AC-005
-- [ ] T013 [Stage 3: Verification] Verify single NAT Gateway via `aws ec2 describe-nat-gateways` in CI (Depends on T009) — AC-006
-- [ ] T014 [Stage 3: Verification] Verify 3 route tables via `aws ec2 describe-route-tables` in CI (Depends on T009) — AC-007
+- [x] T008 [Stage 3: Verification] Run IaC validation (`terraform fmt -check -recursive && terraform validate`) in CI (Depends on T007) — AC-001
+- [x] T009 [Stage 3: Verification] Run `terraform plan -detailed-exitcode` in CI (Depends on T008) — AC-002
+- [x] T010 [Stage 3: Verification] Verify VPC CIDR = `10.0.0.0/16` via `aws ec2 describe-vpcs` in CI (Depends on T009) — AC-003
+- [x] T011 [Stage 3: Verification] Verify 6 subnets (3 public + 3 private) via `aws ec2 describe-subnets` in CI (Depends on T009) — AC-004
+- [x] T012 [Stage 3: Verification] Verify IGW attached via `aws ec2 describe-internet-gateways` in CI (Depends on T009) — AC-005
+- [x] T013 [Stage 3: Verification] Verify single NAT Gateway via `aws ec2 describe-nat-gateways` in CI (Depends on T009) — AC-006
+- [x] T014 [Stage 3: Verification] Verify 3 route tables via `aws ec2 describe-route-tables` in CI (Depends on T009) — AC-007
 
 ---
 
