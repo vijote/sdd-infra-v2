@@ -44,6 +44,15 @@ curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscl
 unzip -q -o /tmp/awscliv2.zip -d /tmp
 /tmp/aws/install --bin-dir /usr/local/bin
 
+# --- Load br_netfilter and enable required sysctls (kubeadm preflight requirements) ---
+modprobe br_netfilter
+cat <<'EOF' > /etc/sysctl.d/99-kubernetes.conf
+net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward = 1
+EOF
+sysctl --system
+
 # --- Write kubeadm config (cert SANs = private IP + localhost, pod CIDR, control-plane-endpoints) ---
 cat > /etc/kubernetes/kubeadm-config.yaml <<EOF
 apiVersion: kubeadm.k8s.io/v1beta3
@@ -67,10 +76,6 @@ apiServer:
     - ${PRIVATE_IP}
     - localhost
     - 127.0.0.1
----
-apiVersion: kubelet.k8s.io/v1beta1
-kind: KubeletConfiguration
-cgroupDriver: systemd
 EOF
 
 # --- Run kubeadm init ---
