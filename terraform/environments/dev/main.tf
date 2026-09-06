@@ -34,14 +34,79 @@ module "cluster_plumbing" {
 module "control_plane" {
   source = "../../modules/control-plane"
 
-  region                           = var.region
-  vpc_id                           = module.vpc.vpc_id
-  private_subnet_ids               = module.vpc.private_subnet_ids
-  control_plane_security_group_id  = module.cluster_plumbing.control_plane_security_group_id
-  node_iam_instance_profile_name   = module.cluster_plumbing.node_iam_instance_profile_name
+  region                          = var.region
+  vpc_id                          = module.vpc.vpc_id
+  private_subnet_ids              = module.vpc.private_subnet_ids
+  control_plane_security_group_id = module.cluster_plumbing.control_plane_security_group_id
+  node_iam_instance_profile_name  = module.cluster_plumbing.node_iam_instance_profile_name
 
   tags = {
     Project = "sdd-k8s-platform"
     Phase   = "3"
+  }
+}
+
+module "worker_nodes" {
+  source = "../../modules/worker-nodes"
+
+  region                         = var.region
+  vpc_id                         = module.vpc.vpc_id
+  private_subnet_ids             = module.vpc.private_subnet_ids
+  worker_security_group_id       = module.cluster_plumbing.worker_security_group_id
+  node_iam_instance_profile_name = module.cluster_plumbing.node_iam_instance_profile_name
+  control_plane_instance_id      = module.control_plane.control_plane_instance_id
+
+  tags = {
+    Project = "sdd-k8s-platform"
+    Phase   = "3"
+  }
+}
+
+# Flannel CNI — applied on the control plane via SSM Run Command (P7: version-controlled, re-runnable).
+# The local-exec runs on the CI runner (which has the assumed-role AWS credentials); it only issues the
+# SSM send-command. The actual `kubectl apply` runs on the control plane instance.
+locals {
+  flannel_version      = "v0.24.0"
+  flannel_manifest_url = "https://raw.githubusercontent.com/flannel-io/flannel/${local.flannel_version}/Documentation/kube-flannel.yml"
+}
+
+resource "null_resource" "apply_flannel_cni" {
+  depends_on = [module.worker_nodes]
+
+  # Re-apply the CNI when the pinned Flannel version changes
+  triggers = {
+    flannel_version = local.flannel_version
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      FLANNEL_URL="${local.flannel_manifest_url}"
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[\\\"curl -sSL $${FLANNEL_URL} -o /tmp/kube-flannel.yml\\\",\\\"kubectl apply -f /tmp/kube-flannel.yml\\\"]" \
+        --timeout-seconds 300 \
+        --comment "Apply Flannel CNI ${local.flannel_version} (003-3)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 60); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "Flannel CNI ${local.flannel_version} applied successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "Flannel CNI apply failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "Flannel CNI apply timed out waiting for invocation" >&2
+      exit 1
+    EOT
   }
 }

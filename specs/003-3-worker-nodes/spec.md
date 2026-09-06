@@ -12,30 +12,50 @@
 ### 1.1 Terraform / HCL Resource Contracts
 
 ```hcl
-# Input Variables
+# Input Variables (P2: types, defaults, constraints)
 variable "vpc_id" {
   type        = string
   description = "VPC ID from 002-vpc-foundation"
+  validation {
+    condition     = can(regex("^vpc-[0-9a-f]{8,17}$", var.vpc_id))
+    error_message = "vpc_id must be a valid VPC ID (vpc-...)."
+  }
 }
 
 variable "private_subnet_ids" {
   type        = list(string)
-  description = "Private subnet IDs from 002-vpc-foundation"
+  description = "Private subnet IDs from 002-vpc-foundation (workers use [1] and [2])"
+  validation {
+    condition     = length(var.private_subnet_ids) >= 3
+    error_message = "private_subnet_ids must contain at least 3 subnets (workers use indices 1 and 2)."
+  }
 }
 
 variable "worker_security_group_id" {
   type        = string
   description = "Worker SG from 003-1-cluster-plumbing"
+  validation {
+    condition     = can(regex("^sg-[0-9a-f]{8,17}$", var.worker_security_group_id))
+    error_message = "worker_security_group_id must be a valid SG ID (sg-...)."
+  }
 }
 
 variable "node_iam_instance_profile_name" {
   type        = string
   description = "IAM instance profile from 003-1-cluster-plumbing"
+  validation {
+    condition     = length(var.node_iam_instance_profile_name) > 0
+    error_message = "node_iam_instance_profile_name must not be empty."
+  }
 }
 
 variable "control_plane_instance_id" {
   type        = string
   description = "Control plane instance ID from 003-2-control-plane (CNI applied here)"
+  validation {
+    condition     = can(regex("^i-[0-9a-f]{8,17}$", var.control_plane_instance_id))
+    error_message = "control_plane_instance_id must be a valid EC2 instance ID (i-...)."
+  }
 }
 
 # Resource / Module Interface
@@ -54,6 +74,27 @@ module "worker_nodes" {
   }
 }
 
+# Flannel CNI — version-controlled, re-runnable (P7 Immutable Deployment)
+# Applied on the control plane via SSM after workers join; idempotent (kubectl apply).
+resource "null_resource" "apply_flannel_cni" {
+  depends_on = [module.worker_nodes]
+  triggers   = { control_plane_instance_id = var.control_plane_instance_id }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      CID=$(aws ssm send-command --instance-ids ${var.control_plane_instance_id} \
+        --document-name AWS-RunShellScript \
+        --parameters 'commands=["sudo kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"]' \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 30); do
+        S=$(aws ssm get-command-invocation --command-id $CID --instance-id ${var.control_plane_instance_id} --query 'Status' --output text)
+        [ "$S" = "Success" ] && break; sleep 10
+      done
+      [ "$S" = "Success" ]
+    EOT
+  }
+}
+
 # Outputs
 output "worker_instance_ids" {
   value       = module.worker_nodes.worker_instance_ids
@@ -62,8 +103,14 @@ output "worker_instance_ids" {
 ```
 
 ### 1.2 Kubernetes Manifest / Helm Values Contracts
-- **Worker bootstrap** (user-data, runs once at first boot): install containerd → kubelet/kubeadm/kubectl v1.28.0 → fetch join command from SSM Parameter `/sdd-k8s-platform/kubeadm-join-command` → `kubeadm join`
-- **Flannel CNI**: `kube-flannel.yml` (VXLAN backend, VNI 4096, port 4789 UDP, network `192.168.0.0/16`) — applied **on the control plane** after workers join
+- **Worker bootstrap** (user-data, runs once at first boot) — a worker runs kubelet, so it needs the **same node prerequisites** the control plane required (see `003-0-kubeadm-repo-gpg-fix` + `003-0-kubeadm-preflight-sysctl-fix`):
+  1. install containerd (`SystemdCgroup = true`)
+  2. write `/etc/yum.repos.d/kubernetes.repo` with `gpgcheck=1` + `gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key` (AL2023 gotcha: `dnf config-manager --add-repo` omits `gpgkey` → `GPG check FAILED`)
+  3. `dnf install kubelet/kubeadm/kubectl v1.28.0`
+  4. `modprobe br_netfilter` + `/etc/sysctl.d/99-kubernetes.conf` (`net.bridge.bridge-nf-call-iptables=1`, `net.bridge.bridge-nf-call-ip6tables=1`, `net.ipv4.ip_forward=1`) + `sysctl --system`
+  5. install AWS CLI → fetch join command from SSM Parameter `/sdd-k8s-platform/kubeadm-join-command` (SecureString, `--with-decryption`) → `kubeadm join`
+  - **No IMDSv2 private-IP fetch needed** — the join command already carries the control plane endpoint
+- **Flannel CNI**: `kube-flannel.yml` (VXLAN backend, VNI 4096, port 4789 UDP, network `192.168.0.0/16`) — applied **on the control plane** after workers join, via a version-controlled `null_resource` (see 1.1), NOT only inside a verification AC
 - **Deployment order**: workers join (NotReady until CNI) → apply Flannel on control plane → all nodes Ready → CoreDNS Ready
 
 ### 1.3 Data & Storage Contracts
@@ -78,6 +125,8 @@ output "worker_instance_ids" {
 ## 2. Technical Acceptance Criteria
 
 All criteria MUST be machine-verifiable in CI/CD. AC-004 through AC-007 execute **on the control plane via SSM** (`aws ssm send-command` + poll `aws ssm get-command-invocation` until `Status` = `Success`) — no public API endpoint, no kubeconfig in CI.
+
+> **P5/P6 — verification scope**: AC-001–AC-003 are static/EC2 checks that run in the existing `terraform-apply.yml` CI job. AC-004–AC-007 are **user-managed verification** (SSM Run Command against the live cluster) — they are defined here as machine-verifiable commands but are **NOT** added to `terraform-apply.yml` (P6: no local/agent tooling, no new CI jobs). They are executed by the user after apply, exactly as the 003-2 verification was.
 
 - [ ] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`)
 - [ ] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`)
@@ -100,11 +149,11 @@ All criteria MUST be machine-verifiable in CI/CD. AC-004 through AC-007 execute 
   aws ssm get-command-invocation --command-id $CID --instance-id $IID \
     --query 'StandardOutputContent' --output text | grep -q '^2$'
   ```
-- [ ] AC-005: Flannel CNI deployed on control plane
+- [ ] AC-005: Flannel CNI deployed on control plane (applied by the version-controlled `null_resource.apply_flannel_cni`; this AC only verifies the daemonset is rolled out)
   ```bash
   IID=$(terraform output -raw control_plane_instance_id)
   CID=$(aws ssm send-command --instance-ids $IID --document-name AWS-RunShellScript \
-    --parameters 'commands=["sudo kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml && sudo kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s"]' \
+    --parameters 'commands=["sudo kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s"]' \
     --query 'Command.CommandId' --output text)
   for i in $(seq 1 30); do
     S=$(aws ssm get-command-invocation --command-id $CID --instance-id $IID --query 'Status' --output text)

@@ -14,12 +14,12 @@
 
 ## Stage 2: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T002 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001)
-- [ ] T003 [Stage 2: Verify] AC-002: br_netfilter module is loaded (`grep -q 'modprobe br_netfilter' terraform/modules/control-plane/bootstrap.sh`) (Depends on T002)
-- [ ] T004 [Stage 2: Verify] AC-003: Sysctl file enables bridge netfilter (`grep -q 'net.bridge.bridge-nf-call-iptables = 1' terraform/modules/control-plane/bootstrap.sh`) (Depends on T003)
-- [ ] T005 [Stage 2: Verify] AC-004: Sysctl file enables IP forwarding (`grep -q 'net.ipv4.ip_forward = 1' terraform/modules/control-plane/bootstrap.sh`) (Depends on T004)
-- [ ] T006 [Stage 2: Verify] AC-005: KubeletConfiguration document removed (`! grep -q 'kind: KubeletConfiguration' terraform/modules/control-plane/bootstrap.sh`) (Depends on T005)
-- [ ] T007 [Stage 2: Verify] AC-006: Join command published to SSM after instance re-launch (`aws ssm get-parameter --name /sdd-k8s-platform/kubeadm-join-command --with-decryption --query 'Parameter.Value' --output text | grep -q 'kubeadm join'`) (Depends on T006)
+- [x] T002 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001)
+- [x] T003 [Stage 2: Verify] AC-002: br_netfilter module is loaded (`grep -q 'modprobe br_netfilter' terraform/modules/control-plane/bootstrap.sh`) (Depends on T002)
+- [x] T004 [Stage 2: Verify] AC-003: Sysctl file enables bridge netfilter (`grep -q 'net.bridge.bridge-nf-call-iptables = 1' terraform/modules/control-plane/bootstrap.sh`) (Depends on T003)
+- [x] T005 [Stage 2: Verify] AC-004: Sysctl file enables IP forwarding (`grep -q 'net.ipv4.ip_forward = 1' terraform/modules/control-plane/bootstrap.sh`) (Depends on T004)
+- [x] T006 [Stage 2: Verify] AC-005: KubeletConfiguration document removed (`! grep -q 'kind: KubeletConfiguration' terraform/modules/control-plane/bootstrap.sh`) (Depends on T005)
+- [x] T007 [Stage 2: Verify] AC-006: Join command published to SSM after instance re-launch (`aws ssm get-parameter --name /sdd-k8s-platform/kubeadm-join-command --with-decryption --query 'Parameter.Value' --output text | grep -q 'kubeadm join'`) (Depends on T006)
 
 ---
 
