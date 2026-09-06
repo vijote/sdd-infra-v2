@@ -79,7 +79,8 @@ resource "null_resource" "apply_flannel_cni" {
   }
 
   provisioner "local-exec" {
-    command = <<-EOT
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
       set -euo pipefail
       INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
       FLANNEL_URL="${local.flannel_manifest_url}"
