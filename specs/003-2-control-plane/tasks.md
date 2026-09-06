@@ -25,9 +25,9 @@
 
 ## Stage 3: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T008 [Stage 3: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T007)
-- [ ] T009 [Stage 3: Verify] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`) (Depends on T008)
-- [ ] T010 [Stage 3: Verify] AC-003: Control plane EC2 instance running (`aws ec2 describe-instances --instance-ids $(terraform output -raw control_plane_instance_id) --query 'Reservations[0].Instances[0].State.Name' --output text | grep -q 'running'`) (Depends on T009)
+- [x] T008 [Stage 3: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T007)
+- [x] T009 [Stage 3: Verify] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`) (Depends on T008)
+- [x] T010 [Stage 3: Verify] AC-003: Control plane EC2 instance running (`aws ec2 describe-instances --instance-ids $(terraform output -raw control_plane_instance_id) --query 'Reservations[0].Instances[0].State.Name' --output text | grep -q 'running'`) (Depends on T009)
 - [ ] T011 [Stage 3: Verify] AC-004: kubeadm init completed — control plane node Ready via SSM (`kubectl wait --for=condition=Ready node --selector=node-role.kubernetes.io/control-plane --timeout=600s`, poll `get-command-invocation` until `Success`) (Depends on T010)
 - [ ] T012 [Stage 3: Verify] AC-005: API server `/healthz` OK via SSM AND join command published (`aws ssm get-parameter --name /sdd-k8s-platform/kubeadm-join-command --with-decryption --query 'Parameter.Value' --output text | grep -q 'kubeadm join'`) (Depends on T011)
 
