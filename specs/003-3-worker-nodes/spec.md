@@ -12,30 +12,50 @@
 ### 1.1 Terraform / HCL Resource Contracts
 
 ```hcl
-# Input Variables
+# Input Variables (P2: types, defaults, constraints)
 variable "vpc_id" {
   type        = string
   description = "VPC ID from 002-vpc-foundation"
+  validation {
+    condition     = can(regex("^vpc-[0-9a-f]{8,17}$", var.vpc_id))
+    error_message = "vpc_id must be a valid VPC ID (vpc-...)."
+  }
 }
 
 variable "private_subnet_ids" {
   type        = list(string)
-  description = "Private subnet IDs from 002-vpc-foundation"
+  description = "Private subnet IDs from 002-vpc-foundation (workers use [1] and [2])"
+  validation {
+    condition     = length(var.private_subnet_ids) >= 3
+    error_message = "private_subnet_ids must contain at least 3 subnets (workers use indices 1 and 2)."
+  }
 }
 
 variable "worker_security_group_id" {
   type        = string
   description = "Worker SG from 003-1-cluster-plumbing"
+  validation {
+    condition     = can(regex("^sg-[0-9a-f]{8,17}$", var.worker_security_group_id))
+    error_message = "worker_security_group_id must be a valid SG ID (sg-...)."
+  }
 }
 
 variable "node_iam_instance_profile_name" {
   type        = string
   description = "IAM instance profile from 003-1-cluster-plumbing"
+  validation {
+    condition     = length(var.node_iam_instance_profile_name) > 0
+    error_message = "node_iam_instance_profile_name must not be empty."
+  }
 }
 
 variable "control_plane_instance_id" {
   type        = string
   description = "Control plane instance ID from 003-2-control-plane (CNI applied here)"
+  validation {
+    condition     = can(regex("^i-[0-9a-f]{8,17}$", var.control_plane_instance_id))
+    error_message = "control_plane_instance_id must be a valid EC2 instance ID (i-...)."
+  }
 }
 
 # Resource / Module Interface
@@ -105,6 +125,8 @@ output "worker_instance_ids" {
 ## 2. Technical Acceptance Criteria
 
 All criteria MUST be machine-verifiable in CI/CD. AC-004 through AC-007 execute **on the control plane via SSM** (`aws ssm send-command` + poll `aws ssm get-command-invocation` until `Status` = `Success`) — no public API endpoint, no kubeconfig in CI.
+
+> **P5/P6 — verification scope**: AC-001–AC-003 are static/EC2 checks that run in the existing `terraform-apply.yml` CI job. AC-004–AC-007 are **user-managed verification** (SSM Run Command against the live cluster) — they are defined here as machine-verifiable commands but are **NOT** added to `terraform-apply.yml` (P6: no local/agent tooling, no new CI jobs). They are executed by the user after apply, exactly as the 003-2 verification was.
 
 - [ ] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`)
 - [ ] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`)
