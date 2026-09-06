@@ -24,7 +24,14 @@ systemctl enable --now containerd
 
 # --- Install kubeadm / kubelet / kubectl (pinned to v1.28.0) ---
 dnf install -y dnf-plugins-core
-dnf config-manager --add-repo https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+cat <<'EOF' > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+EOF
 dnf install -y kubelet-${K8S_VERSION} kubeadm-${K8S_VERSION} kubectl-${K8S_VERSION}
 systemctl enable --now kubelet
 
