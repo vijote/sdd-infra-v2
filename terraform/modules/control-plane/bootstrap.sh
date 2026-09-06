@@ -12,8 +12,11 @@ POD_CIDR="192.168.0.0/16"
 SERVICE_CIDR="10.96.0.0/12"
 SSM_PARAM_NAME="/sdd-k8s-platform/kubeadm-join-command"
 
-# --- Detect private IP via IMDS (no public IP on this instance) ---
-PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+# --- Detect private IP via IMDSv2 (AL2023 enforces token-based metadata) ---
+IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
+PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
+  http://169.254.169.254/latest/meta-data/local-ipv4)
 echo "Control plane private IP: ${PRIVATE_IP}"
 
 # --- Install and configure containerd (systemd cgroup driver) ---
@@ -65,7 +68,7 @@ apiServer:
     - localhost
     - 127.0.0.1
 ---
-apiVersion: kubeadm.k8s.io/v1beta3
+apiVersion: kubelet.k8s.io/v1beta1
 kind: KubeletConfiguration
 cgroupDriver: systemd
 EOF
