@@ -54,6 +54,27 @@ module "worker_nodes" {
   }
 }
 
+# Flannel CNI — version-controlled, re-runnable (P7 Immutable Deployment)
+# Applied on the control plane via SSM after workers join; idempotent (kubectl apply).
+resource "null_resource" "apply_flannel_cni" {
+  depends_on = [module.worker_nodes]
+  triggers   = { control_plane_instance_id = var.control_plane_instance_id }
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      CID=$(aws ssm send-command --instance-ids ${var.control_plane_instance_id} \
+        --document-name AWS-RunShellScript \
+        --parameters 'commands=["sudo kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml"]' \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 30); do
+        S=$(aws ssm get-command-invocation --command-id $CID --instance-id ${var.control_plane_instance_id} --query 'Status' --output text)
+        [ "$S" = "Success" ] && break; sleep 10
+      done
+      [ "$S" = "Success" ]
+    EOT
+  }
+}
+
 # Outputs
 output "worker_instance_ids" {
   value       = module.worker_nodes.worker_instance_ids
@@ -62,8 +83,14 @@ output "worker_instance_ids" {
 ```
 
 ### 1.2 Kubernetes Manifest / Helm Values Contracts
-- **Worker bootstrap** (user-data, runs once at first boot): install containerd → kubelet/kubeadm/kubectl v1.28.0 → fetch join command from SSM Parameter `/sdd-k8s-platform/kubeadm-join-command` → `kubeadm join`
-- **Flannel CNI**: `kube-flannel.yml` (VXLAN backend, VNI 4096, port 4789 UDP, network `192.168.0.0/16`) — applied **on the control plane** after workers join
+- **Worker bootstrap** (user-data, runs once at first boot) — a worker runs kubelet, so it needs the **same node prerequisites** the control plane required (see `003-0-kubeadm-repo-gpg-fix` + `003-0-kubeadm-preflight-sysctl-fix`):
+  1. install containerd (`SystemdCgroup = true`)
+  2. write `/etc/yum.repos.d/kubernetes.repo` with `gpgcheck=1` + `gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key` (AL2023 gotcha: `dnf config-manager --add-repo` omits `gpgkey` → `GPG check FAILED`)
+  3. `dnf install kubelet/kubeadm/kubectl v1.28.0`
+  4. `modprobe br_netfilter` + `/etc/sysctl.d/99-kubernetes.conf` (`net.bridge.bridge-nf-call-iptables=1`, `net.bridge.bridge-nf-call-ip6tables=1`, `net.ipv4.ip_forward=1`) + `sysctl --system`
+  5. install AWS CLI → fetch join command from SSM Parameter `/sdd-k8s-platform/kubeadm-join-command` (SecureString, `--with-decryption`) → `kubeadm join`
+  - **No IMDSv2 private-IP fetch needed** — the join command already carries the control plane endpoint
+- **Flannel CNI**: `kube-flannel.yml` (VXLAN backend, VNI 4096, port 4789 UDP, network `192.168.0.0/16`) — applied **on the control plane** after workers join, via a version-controlled `null_resource` (see 1.1), NOT only inside a verification AC
 - **Deployment order**: workers join (NotReady until CNI) → apply Flannel on control plane → all nodes Ready → CoreDNS Ready
 
 ### 1.3 Data & Storage Contracts
@@ -100,11 +127,11 @@ All criteria MUST be machine-verifiable in CI/CD. AC-004 through AC-007 execute 
   aws ssm get-command-invocation --command-id $CID --instance-id $IID \
     --query 'StandardOutputContent' --output text | grep -q '^2$'
   ```
-- [ ] AC-005: Flannel CNI deployed on control plane
+- [ ] AC-005: Flannel CNI deployed on control plane (applied by the version-controlled `null_resource.apply_flannel_cni`; this AC only verifies the daemonset is rolled out)
   ```bash
   IID=$(terraform output -raw control_plane_instance_id)
   CID=$(aws ssm send-command --instance-ids $IID --document-name AWS-RunShellScript \
-    --parameters 'commands=["sudo kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml && sudo kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s"]' \
+    --parameters 'commands=["sudo kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s"]' \
     --query 'Command.CommandId' --output text)
   for i in $(seq 1 30); do
     S=$(aws ssm get-command-invocation --command-id $CID --instance-id $IID --query 'Status' --output text)
