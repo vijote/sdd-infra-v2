@@ -37,3 +37,8 @@ output "control_plane_private_ip" {
   value       = module.control_plane.control_plane_private_ip
   description = "Control plane private IP (API server endpoint, consumed by 003-3)"
 }
+
+output "worker_instance_ids" {
+  value       = module.worker_nodes.worker_instance_ids
+  description = "Worker EC2 instance IDs (consumed by 003-3 verification AC-003)"
+}
