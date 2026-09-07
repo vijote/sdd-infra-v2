@@ -1,6 +1,6 @@
 # Spec: Flannel SSM Params JSON Fix
 
-**Feature Branch**: `003-0-flannel-ssm-params-json-fix` | **Date**: 2026-09-06 | **Status**: Draft
+**Feature Branch**: `003-6-flannel-ssm-params-json-fix` | **Date**: 2026-09-06 | **Status**: Draft
 
 ## 1. Technical Scope & Infrastructure Contracts
 

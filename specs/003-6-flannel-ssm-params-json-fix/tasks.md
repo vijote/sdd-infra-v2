@@ -1,6 +1,6 @@
 # Execution Graph (DAG): Flannel SSM Params JSON Fix
 
-**Input**: Design documents from `/specs/003-0-flannel-ssm-params-json-fix/`
+**Input**: Design documents from `/specs/003-6-flannel-ssm-params-json-fix/`
 **Prerequisites**: plan.md (File Impact Matrix & Rollout Stages), spec.md (Contracts & Acceptance Criteria)
 **Estimated Duration**: ~2 min (agent file edit) + CI verification
 
