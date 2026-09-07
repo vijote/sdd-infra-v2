@@ -45,14 +45,25 @@ net.ipv4.ip_forward = 1
 EOF
 sysctl --system
 
-# --- Fetch the join command from SSM (SecureString) and join the cluster ---
-JOIN_COMMAND=$(aws ssm get-parameter \
-  --name "${SSM_PARAM_NAME}" \
-  --with-decryption \
-  --query 'Parameter.Value' \
-  --output text)
+# --- Fetch the join command from SSM (SecureString) and join the cluster.
+# --- Poll: the Flannel provisioner deletes the parameter at the start of the
+# --- apply and the control plane re-creates it at bootstrap end, so it may not
+# --- exist yet when a worker boots. Wait up to 10 min for the control plane to
+# --- finish kubeadm init. ---
+JOIN_COMMAND=""
+for i in $(seq 1 60); do
+  JOIN_COMMAND=$(aws ssm get-parameter \
+    --name "${SSM_PARAM_NAME}" \
+    --with-decryption \
+    --query 'Parameter.Value' \
+    --output text 2>/dev/null) || JOIN_COMMAND=""
+  if [ -n "${JOIN_COMMAND}" ]; then
+    break
+  fi
+  sleep 10
+done
 if [ -z "${JOIN_COMMAND}" ]; then
-  echo "ERROR: join command not found in SSM ${SSM_PARAM_NAME}" >&2
+  echo "ERROR: join command not found in SSM ${SSM_PARAM_NAME} after timeout" >&2
   exit 1
 fi
 eval "${JOIN_COMMAND}"
