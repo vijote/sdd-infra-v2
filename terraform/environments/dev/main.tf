@@ -84,6 +84,11 @@ resource "null_resource" "apply_flannel_cni" {
       set -euo pipefail
       INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
       FLANNEL_URL="${local.flannel_manifest_url}"
+      # Clear any stale join-command parameter from a previous run so its presence
+      # is a reliable per-run "bootstrap complete" signal (deleted here, re-created
+      # by the control plane bootstrap at its end after kubeadm init).
+      aws ssm delete-parameter \
+        --name "/sdd-k8s-platform/kubeadm-join-command" 2>/dev/null || true
       # Wait for the control plane's SSM agent to register (fresh instance: the agent
       # starts after boot and lags behind the EC2 'running' state Terraform waits for).
       for i in $(seq 1 30); do
@@ -98,6 +103,25 @@ resource "null_resource" "apply_flannel_cni" {
       done
       if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
         echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion: the join-command parameter is published by
+      # the control plane bootstrap as its LAST step (after kubeadm init + kubeconfig
+      # copy). It was deleted above, so its presence means THIS run's bootstrap
+      # finished and kubectl + the API server are ready for `kubectl apply`.
+      for i in $(seq 1 60); do
+        JOIN_PRESENT=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-join-command" \
+          --with-decryption \
+          --query 'Parameter.Value' --output text 2>/dev/null) || JOIN_PRESENT=""
+        if [ -n "$${JOIN_PRESENT}" ]; then
+          echo "Control plane bootstrap complete (join command published)"
+          break
+        fi
+        sleep 10
+      done
+      if [ -z "$${JOIN_PRESENT}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
         exit 1
       fi
       CMD_ID=$(aws ssm send-command \
