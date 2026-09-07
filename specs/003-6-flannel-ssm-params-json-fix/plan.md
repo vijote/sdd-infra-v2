@@ -1,6 +1,6 @@
 # Architecture Delta: Flannel SSM Params JSON Fix
 
-**Branch**: `003-0-flannel-ssm-params-json-fix` | **Date**: 2026-09-06 | **Spec**: specs/003-0-flannel-ssm-params-json-fix/spec.md
+**Branch**: `003-6-flannel-ssm-params-json-fix` | **Date**: 2026-09-06 | **Spec**: specs/003-6-flannel-ssm-params-json-fix/spec.md
 
 ## 1. Touch Points & File Impact Matrix
 

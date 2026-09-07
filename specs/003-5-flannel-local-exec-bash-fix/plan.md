@@ -1,6 +1,6 @@
 # Architecture Delta: Flannel Local-Exec Bash Fix
 
-**Branch**: `003-0-flannel-local-exec-bash-fix` | **Date**: 2026-09-06 | **Spec**: specs/003-0-flannel-local-exec-bash-fix/spec.md
+**Branch**: `003-5-flannel-local-exec-bash-fix` | **Date**: 2026-09-06 | **Spec**: specs/003-5-flannel-local-exec-bash-fix/spec.md
 
 ## 1. Touch Points & File Impact Matrix
 

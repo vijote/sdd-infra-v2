@@ -1,6 +1,6 @@
 # Execution Graph (DAG): Flannel Local-Exec Bash Fix
 
-**Input**: Design documents from `/specs/003-0-flannel-local-exec-bash-fix/`
+**Input**: Design documents from `/specs/003-5-flannel-local-exec-bash-fix/`
 **Prerequisites**: plan.md (File Impact Matrix & Rollout Stages), spec.md (Contracts & Acceptance Criteria)
 **Estimated Duration**: ~2 min (agent file edit) + CI verification
 

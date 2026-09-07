@@ -1,6 +1,6 @@
 # Spec: Flannel Local-Exec Bash Fix
 
-**Feature Branch**: `003-0-flannel-local-exec-bash-fix` | **Date**: 2026-09-06 | **Status**: Draft
+**Feature Branch**: `003-5-flannel-local-exec-bash-fix` | **Date**: 2026-09-06 | **Status**: Draft
 
 ## 1. Technical Scope & Infrastructure Contracts
 
