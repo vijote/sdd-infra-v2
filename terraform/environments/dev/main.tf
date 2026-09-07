@@ -84,6 +84,22 @@ resource "null_resource" "apply_flannel_cni" {
       set -euo pipefail
       INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
       FLANNEL_URL="${local.flannel_manifest_url}"
+      # Wait for the control plane's SSM agent to register (fresh instance: the agent
+      # starts after boot and lags behind the EC2 'running' state Terraform waits for).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
       CMD_ID=$(aws ssm send-command \
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
