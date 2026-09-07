@@ -87,7 +87,7 @@ resource "null_resource" "apply_flannel_cni" {
       CMD_ID=$(aws ssm send-command \
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
-        --parameters "commands=[\\\"curl -sSL $${FLANNEL_URL} -o /tmp/kube-flannel.yml\\\",\\\"kubectl apply -f /tmp/kube-flannel.yml\\\"]" \
+        --parameters "commands=[\"curl -sSL $${FLANNEL_URL} -o /tmp/kube-flannel.yml\",\"kubectl apply -f /tmp/kube-flannel.yml\"]" \
         --timeout-seconds 300 \
         --comment "Apply Flannel CNI ${local.flannel_version} (003-3)" \
         --query 'Command.CommandId' --output text)
