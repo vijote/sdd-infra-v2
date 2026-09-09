@@ -135,7 +135,7 @@ resource "null_resource" "apply_flannel_cni" {
         STATUS=$(aws ssm get-command-invocation \
           --instance-id "$${INSTANCE_ID}" \
           --command-id "$${CMD_ID}" \
-          --query 'CommandInvocation.Status' --output text 2>/dev/null) || STATUS="Pending"
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
         if [ "$${STATUS}" = "Success" ]; then
           echo "Flannel CNI ${local.flannel_version} applied successfully"
           exit 0
