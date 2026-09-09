@@ -10,8 +10,8 @@ exec > >(tee /var/log/bootstrap.log) 2>&1
 
 K8S_VERSION="1.28.0"
 SSM_PARAM_NAME="/sdd-k8s-platform/kubeadm-join-command"
-# Injected by templatefile (worker-nodes/main.tf) — the control plane's instance ID.
-CONTROL_PLANE_INSTANCE_ID="%{control_plane_instance_id}"
+# Injected by replace() in worker-nodes/main.tf — the control plane's instance ID.
+CONTROL_PLANE_INSTANCE_ID="%%CONTROL_PLANE_INSTANCE_ID%%"
 BOOTSTRAP_ID_PARAM="/sdd-k8s-platform/kubeadm-bootstrap-instance-id"
 
 # --- Install and configure containerd (systemd cgroup driver) ---

@@ -10,7 +10,7 @@
 - **Terraform Scope**:
   - `terraform/modules/control-plane/bootstrap.sh` (publish instance-ID param)
   - `terraform/environments/dev/main.tf` (Flannel gate compares instance-ID param)
-  - `terraform/modules/worker-nodes/main.tf` (user-data → `templatefile`)
+  - `terraform/modules/worker-nodes/main.tf` (user-data → `replace()` token injection)
   - `terraform/modules/worker-nodes/bootstrap.sh` (consume instance-ID param)
 
 ## 2. Problem Statement
@@ -120,19 +120,20 @@ The worker has the same stale-signal bug: it polls for the join-command param to
 equal the control plane's instance ID **before** fetching + `eval`ing the join command.
 
 The worker's user-data is a static `file()`, so the control plane instance ID is injected via
-`templatefile` (the module already receives `var.control_plane_instance_id`):
+`replace()` on a unique literal token (the module already receives `var.control_plane_instance_id`).
+**`templatefile` is NOT used**: the bootstrap script is full of bash `${...}` expansions that the
+Terraform template engine would try to interpret as expressions, and `%{...}` is template *control*
+syntax, not interpolation — both fail.
 
 `worker-nodes/main.tf` (line 37):
 ```hcl
-user_data = templatefile("${path.module}/bootstrap.sh", {
-  control_plane_instance_id = var.control_plane_instance_id
-})
+user_data = replace(file("${path.module}/bootstrap.sh"), "%%CONTROL_PLANE_INSTANCE_ID%%", var.control_plane_instance_id)
 ```
 
-`worker-nodes/bootstrap.sh` — add a placeholder near the top and gate the join on the instance-ID
+`worker-nodes/bootstrap.sh` — add the token near the top and gate the join on the instance-ID
 param:
 ```bash
-CONTROL_PLANE_INSTANCE_ID="%{control_plane_instance_id}"
+CONTROL_PLANE_INSTANCE_ID="%%CONTROL_PLANE_INSTANCE_ID%%"
 BOOTSTRAP_ID_PARAM="/sdd-k8s-platform/kubeadm-bootstrap-instance-id"
 # Wait for the control plane's per-run bootstrap signal (its instance ID) to match, so a
 # stale join command from a previous run is never eval'd.
@@ -160,7 +161,7 @@ All criteria MUST be machine-verifiable in CI/CD (GitHub Actions), never locally
 - [ ] AC-002: Control plane publishes the instance-ID signal (`grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/control-plane/bootstrap.sh`)
 - [ ] AC-003: Flannel gate compares the instance-ID param to the current instance (`grep -qF 'BOOTSTRAP_ID}" = "$${INSTANCE_ID}' terraform/environments/dev/main.tf`)
 - [ ] AC-004: Worker gates the join on the instance-ID signal (`grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/worker-nodes/bootstrap.sh`)
-- [ ] AC-005: Worker user-data uses `templatefile` (`grep -qF 'templatefile' terraform/modules/worker-nodes/main.tf`)
+- [ ] AC-005: Worker user-data injects the instance ID via `replace()` (`grep -qF 'replace(file("${path.module}/bootstrap.sh")' terraform/modules/worker-nodes/main.tf`)
 - [ ] AC-006: `terraform plan -detailed-exitcode` exits 0 (no resource changes; only provisioner + bootstrap + user-data changes)
 - [ ] AC-007: Flannel daemonset rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`)
 - [ ] AC-008: All 3 nodes Ready (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes --no-headers | grep -c ' Ready'` returns `3`)
