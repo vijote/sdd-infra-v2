@@ -84,11 +84,6 @@ resource "null_resource" "apply_flannel_cni" {
       set -euo pipefail
       INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
       FLANNEL_URL="${local.flannel_manifest_url}"
-      # Clear any stale join-command parameter from a previous run so its presence
-      # is a reliable per-run "bootstrap complete" signal (deleted here, re-created
-      # by the control plane bootstrap at its end after kubeadm init).
-      aws ssm delete-parameter \
-        --name "/sdd-k8s-platform/kubeadm-join-command" 2>/dev/null || true
       # Wait for the control plane's SSM agent to register (fresh instance: the agent
       # starts after boot and lags behind the EC2 'running' state Terraform waits for).
       for i in $(seq 1 30); do
@@ -107,8 +102,10 @@ resource "null_resource" "apply_flannel_cni" {
       fi
       # Wait for bootstrap completion: the join-command parameter is published by
       # the control plane bootstrap as its LAST step (after kubeadm init + kubeconfig
-      # copy). It was deleted above, so its presence means THIS run's bootstrap
-      # finished and kubectl + the API server are ready for `kubectl apply`.
+      # copy). Its presence means the control plane bootstrap finished and kubectl +
+      # the API server are ready for `kubectl apply`. On a fresh apply the parameter
+      # is absent until bootstrap publishes it; on a subsequent apply (persistent
+      # control plane) it is already present and the wait returns immediately.
       for i in $(seq 1 60); do
         JOIN_PRESENT=$(aws ssm get-parameter \
           --name "/sdd-k8s-platform/kubeadm-join-command" \
@@ -135,7 +132,7 @@ resource "null_resource" "apply_flannel_cni" {
         STATUS=$(aws ssm get-command-invocation \
           --instance-id "$${INSTANCE_ID}" \
           --command-id "$${CMD_ID}" \
-          --query 'CommandInvocation.Status' --output text 2>/dev/null) || STATUS="Pending"
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
         if [ "$${STATUS}" = "Success" ]; then
           echo "Flannel CNI ${local.flannel_version} applied successfully"
           exit 0
