@@ -93,4 +93,16 @@ aws ssm put-parameter \
   --value "${JOIN_COMMAND}" \
   --overwrite
 
-echo "Bootstrap complete. Join command published to ${SSM_PARAM_NAME}"
+# --- Publish the per-run bootstrap-complete signal (this instance's ID) ---
+# The Flannel gate and worker bootstrap wait for this to equal the current control
+# plane instance ID, which makes the signal per-run (a stale value from a previous
+# run never matches). Published LAST so its presence implies the join command is fresh.
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
+  http://169.254.169.254/latest/meta-data/instance-id)
+aws ssm put-parameter \
+  --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+  --type String \
+  --value "${INSTANCE_ID}" \
+  --overwrite
+
+echo "Bootstrap complete. Join command published to ${SSM_PARAM_NAME}; instance-id signal = ${INSTANCE_ID}"

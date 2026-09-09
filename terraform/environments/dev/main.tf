@@ -100,24 +100,23 @@ resource "null_resource" "apply_flannel_cni" {
         echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
         exit 1
       fi
-      # Wait for bootstrap completion: the join-command parameter is published by
-      # the control plane bootstrap as its LAST step (after kubeadm init + kubeconfig
-      # copy). Its presence means the control plane bootstrap finished and kubectl +
-      # the API server are ready for `kubectl apply`. On a fresh apply the parameter
-      # is absent until bootstrap publishes it; on a subsequent apply (persistent
-      # control plane) it is already present and the wait returns immediately.
+      # Wait for bootstrap completion: the control plane bootstrap publishes its own
+      # instance ID to the bootstrap-instance-id parameter as its LAST step (after
+      # kubeadm init + kubeconfig copy + join-command publication). Waiting for it to
+      # equal THIS instance's ID makes the signal per-run — a stale value from a
+      # previous run never matches, so a fresh apply blocks until the new bootstrap
+      # finishes, and a persistent apply returns immediately.
       for i in $(seq 1 60); do
-        JOIN_PRESENT=$(aws ssm get-parameter \
-          --name "/sdd-k8s-platform/kubeadm-join-command" \
-          --with-decryption \
-          --query 'Parameter.Value' --output text 2>/dev/null) || JOIN_PRESENT=""
-        if [ -n "$${JOIN_PRESENT}" ]; then
-          echo "Control plane bootstrap complete (join command published)"
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
           break
         fi
         sleep 10
       done
-      if [ -z "$${JOIN_PRESENT}" ]; then
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
         echo "Control plane bootstrap did not complete within timeout" >&2
         exit 1
       fi
