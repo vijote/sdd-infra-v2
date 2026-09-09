@@ -34,7 +34,9 @@ resource "aws_instance" "worker" {
   # No public IP — private subnet, reached via NAT for outbound only
   associate_public_ip_address = false
 
-  user_data = file("${path.module}/bootstrap.sh")
+  user_data = templatefile("${path.module}/bootstrap.sh", {
+    control_plane_instance_id = var.control_plane_instance_id
+  })
 
   root_block_device {
     volume_type = "gp3"

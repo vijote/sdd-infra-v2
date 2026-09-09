@@ -10,6 +10,9 @@ exec > >(tee /var/log/bootstrap.log) 2>&1
 
 K8S_VERSION="1.28.0"
 SSM_PARAM_NAME="/sdd-k8s-platform/kubeadm-join-command"
+# Injected by templatefile (worker-nodes/main.tf) — the control plane's instance ID.
+CONTROL_PLANE_INSTANCE_ID="%{control_plane_instance_id}"
+BOOTSTRAP_ID_PARAM="/sdd-k8s-platform/kubeadm-bootstrap-instance-id"
 
 # --- Install and configure containerd (systemd cgroup driver) ---
 dnf install -y containerd
@@ -45,27 +48,34 @@ net.ipv4.ip_forward = 1
 EOF
 sysctl --system
 
-# --- Fetch the join command from SSM (SecureString) and join the cluster.
-# --- Poll: the Flannel provisioner deletes the parameter at the start of the
-# --- apply and the control plane re-creates it at bootstrap end, so it may not
-# --- exist yet when a worker boots. Wait up to 10 min for the control plane to
-# --- finish kubeadm init. ---
-JOIN_COMMAND=""
+# --- Wait for the control plane's per-run bootstrap signal (its instance ID) to
+# --- match, so a stale join command from a previous run is never eval'd. The
+# --- control plane publishes its own instance ID to BOOTSTRAP_ID_PARAM as the LAST
+# --- step of its bootstrap; a stale value (a previous run's instance ID) never
+# --- equals the current control plane's ID, so this blocks until the current
+# --- control plane finishes kubeadm init. Wait up to 10 min. ---
+BOOTSTRAP_ID=""
 for i in $(seq 1 60); do
-  JOIN_COMMAND=$(aws ssm get-parameter \
-    --name "${SSM_PARAM_NAME}" \
-    --with-decryption \
+  BOOTSTRAP_ID=$(aws ssm get-parameter \
+    --name "${BOOTSTRAP_ID_PARAM}" \
     --query 'Parameter.Value' \
-    --output text 2>/dev/null) || JOIN_COMMAND=""
-  if [ -n "${JOIN_COMMAND}" ]; then
+    --output text 2>/dev/null) || BOOTSTRAP_ID=""
+  if [ "${BOOTSTRAP_ID}" = "${CONTROL_PLANE_INSTANCE_ID}" ]; then
     break
   fi
   sleep 10
 done
-if [ -z "${JOIN_COMMAND}" ]; then
-  echo "ERROR: join command not found in SSM ${SSM_PARAM_NAME} after timeout" >&2
+if [ "${BOOTSTRAP_ID}" != "${CONTROL_PLANE_INSTANCE_ID}" ]; then
+  echo "ERROR: control plane bootstrap signal did not match ${CONTROL_PLANE_INSTANCE_ID} after timeout" >&2
   exit 1
 fi
+
+# --- Fetch the (now fresh) join command from SSM (SecureString) and join the cluster. ---
+JOIN_COMMAND=$(aws ssm get-parameter \
+  --name "${SSM_PARAM_NAME}" \
+  --with-decryption \
+  --query 'Parameter.Value' \
+  --output text)
 eval "${JOIN_COMMAND}"
 
 echo "Bootstrap complete. Worker joined the cluster."
