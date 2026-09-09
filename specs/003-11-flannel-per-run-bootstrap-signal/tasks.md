@@ -16,8 +16,8 @@
 
 ## Stage 3: Worker Bootstrap
 
-- [x] T003 [Stage 3: Worker] In `terraform/modules/worker-nodes/main.tf`: change `user_data = file("${path.module}/bootstrap.sh")` (line 37) to `user_data = templatefile("${path.module}/bootstrap.sh", { control_plane_instance_id = var.control_plane_instance_id })`.
-- [x] T004 [Stage 3: Worker] In `terraform/modules/worker-nodes/bootstrap.sh`: add `CONTROL_PLANE_INSTANCE_ID="%{control_plane_instance_id}"` and `BOOTSTRAP_ID_PARAM="/sdd-k8s-platform/kubeadm-bootstrap-instance-id"` near the top; before the existing join-command fetch, add a 60×10s loop that polls `BOOTSTRAP_ID_PARAM` until it equals `CONTROL_PLANE_INSTANCE_ID` (with a timeout `exit 1`); keep the existing join-command fetch + `eval` after the gate. (Depends on T003)
+- [x] T003 [Stage 3: Worker] In `terraform/modules/worker-nodes/main.tf`: change `user_data = file("${path.module}/bootstrap.sh")` (line 37) to `user_data = replace(file("${path.module}/bootstrap.sh"), "%%CONTROL_PLANE_INSTANCE_ID%%", var.control_plane_instance_id)`.
+- [x] T004 [Stage 3: Worker] In `terraform/modules/worker-nodes/bootstrap.sh`: add `CONTROL_PLANE_INSTANCE_ID="%%CONTROL_PLANE_INSTANCE_ID%%"` and `BOOTSTRAP_ID_PARAM="/sdd-k8s-platform/kubeadm-bootstrap-instance-id"` near the top; before the existing join-command fetch, add a 60×10s loop that polls `BOOTSTRAP_ID_PARAM` until it equals `CONTROL_PLANE_INSTANCE_ID` (with a timeout `exit 1`); keep the existing join-command fetch + `eval` after the gate. (Depends on T003)
 
 ## Stage 4: Verification (CI-only)
 
@@ -25,7 +25,7 @@
 - [ ] T006 [Stage 4: Static] AC-002: `grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/control-plane/bootstrap.sh`
 - [ ] T007 [Stage 4: Static] AC-003: `grep -qF 'BOOTSTRAP_ID}" = "$${INSTANCE_ID}' terraform/environments/dev/main.tf`
 - [ ] T008 [Stage 4: Static] AC-004: `grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/worker-nodes/bootstrap.sh`
-- [ ] T009 [Stage 4: Static] AC-005: `grep -qF 'templatefile' terraform/modules/worker-nodes/main.tf`
+- [ ] T009 [Stage 4: Static] AC-005: `grep -qF 'replace(file("${path.module}/bootstrap.sh")' terraform/modules/worker-nodes/main.tf`
 - [ ] T010 [Stage 4: Plan] AC-006: `terraform plan -detailed-exitcode` exits 0
 - [ ] T011 [Stage 4: E2E] AC-007: Flannel daemonset rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`)
 - [ ] T012 [Stage 4: E2E] AC-008: All 3 nodes Ready (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes --no-headers | grep -c ' Ready'` returns `3`)
