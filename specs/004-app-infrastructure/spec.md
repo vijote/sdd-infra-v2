@@ -122,11 +122,11 @@ All criteria MUST be machine-verifiable in CI/CD. AC-001–AC-002 are static (ex
 
 - [ ] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`)
 - [ ] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`)
-- [ ] AC-003: EBS CSI controller + node plugin ready
+- [ ] AC-003: EBS CSI controller + node plugin ready (rollout status by name — label-agnostic)
   ```bash
   IID=$(terraform output -raw control_plane_instance_id)
   CID=$(aws ssm send-command --instance-ids $IID --document-name AWS-RunShellScript \
-    --parameters 'commands=["KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=Ready pod -l app=ebs-csi-controller -n kube-system --timeout=300s && KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=Ready pod -l app=ebs-csi-node -n kube-system --timeout=300s"]' \
+    --parameters 'commands=["KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=300s && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status daemonset/ebs-csi-node -n kube-system --timeout=300s"]' \
     --query 'Command.CommandId' --output text)
   for i in $(seq 1 30); do
     S=$(aws ssm get-command-invocation --command-id $CID --instance-id $IID --query 'CommandInvocation.Status || Status' --output text)
