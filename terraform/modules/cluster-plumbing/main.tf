@@ -126,6 +126,27 @@ resource "aws_iam_role_policy" "node_ssm_parameters" {
   })
 }
 
+# Inline policy: EBS volume lifecycle for the EBS CSI driver (004-app-infrastructure).
+# The EBS CSI controller (Deployment) + node plugin (DaemonSet) run as pods on the nodes and
+# use the node's instance-profile credentials via IMDS (no IRSA — kubeadm has no OIDC provider).
+resource "aws_iam_role_policy" "node_ebs_csi" {
+  name = "sdd-k8s-platform-node-ebs-csi"
+  role = aws_iam_role.node.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = [
+        "ec2:CreateVolume", "ec2:DeleteVolume", "ec2:AttachVolume", "ec2:DetachVolume",
+        "ec2:CreateTags", "ec2:DeleteTags", "ec2:DescribeVolumes", "ec2:DescribeTags",
+        "ec2:DescribeInstances", "ec2:DescribeSnapshots", "ec2:ModifyVolume"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 # Instance profile for worker nodes
 resource "aws_iam_instance_profile" "node" {
   name = "sdd-k8s-platform-node-profile"
