@@ -76,6 +76,7 @@ resource "null_resource" "apply_flannel_cni" {
   # Re-apply the CNI when the pinned Flannel version changes
   triggers = {
     flannel_version = local.flannel_version
+    pod_cidr        = "192.168.0.0/16"
   }
 
   provisioner "local-exec" {
@@ -123,7 +124,7 @@ resource "null_resource" "apply_flannel_cni" {
       CMD_ID=$(aws ssm send-command \
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
-        --parameters "commands=[\"curl -sSL $${FLANNEL_URL} -o /tmp/kube-flannel.yml\",\"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f /tmp/kube-flannel.yml\"]" \
+        --parameters "commands=[\"curl -sSL $${FLANNEL_URL} -o /tmp/kube-flannel.yml && sed -i 's|10.244.0.0/16|192.168.0.0/16|g' /tmp/kube-flannel.yml && KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f /tmp/kube-flannel.yml && KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-flannel rollout restart ds/kube-flannel-ds\"]" \
         --timeout-seconds 300 \
         --comment "Apply Flannel CNI ${local.flannel_version} (003-3)" \
         --query 'Command.CommandId' --output text)
