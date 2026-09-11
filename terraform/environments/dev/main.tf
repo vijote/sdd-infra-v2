@@ -158,8 +158,9 @@ resource "null_resource" "apply_app_infrastructure" {
   depends_on = [module.worker_nodes]
 
   triggers = {
-    ebs_csi_ref = "release-1.65"
-    ingress_ref = "controller-v1.15.1"
+    ebs_csi_ref     = "release-1.65"
+    ingress_ref     = "controller-v1.15.1"
+    git_bootstrap   = "1" # 004-2: re-runs the provisioner to install git on the running control plane
   }
 
   provisioner "local-exec" {
@@ -202,6 +203,8 @@ resource "null_resource" "apply_app_infrastructure" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
+          \"set -e\",
+          \"dnf install -y git\",
           \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl create namespace sdd-apps --dry-run=client -o yaml | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\",
           \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -k 'github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.65'\",
           \"echo '${base64encode(file("${path.module}/manifests/ebs-gp3-storageclass.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\",
