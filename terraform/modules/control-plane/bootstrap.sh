@@ -17,7 +17,14 @@ IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
   -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
 PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
   http://169.254.169.254/latest/meta-data/local-ipv4)
-echo "Control plane private IP: ${PRIVATE_IP}"
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
+  http://169.254.169.254/latest/meta-data/instance-id)
+# Fail fast if IMDS returned empty values (e.g. token expired or IMDS unreachable).
+[ -n "${PRIVATE_IP}" ] && [ -n "${INSTANCE_ID}" ] || {
+  echo "IMDS fetch failed (PRIVATE_IP='${PRIVATE_IP}' INSTANCE_ID='${INSTANCE_ID}')" >&2
+  exit 1
+}
+echo "Control plane private IP: ${PRIVATE_IP} (instance ${INSTANCE_ID})"
 
 # --- Install and configure containerd (systemd cgroup driver) ---
 dnf install -y containerd
@@ -97,8 +104,8 @@ aws ssm put-parameter \
 # The Flannel gate and worker bootstrap wait for this to equal the current control
 # plane instance ID, which makes the signal per-run (a stale value from a previous
 # run never matches). Published LAST so its presence implies the join command is fresh.
-INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
-  http://169.254.169.254/latest/meta-data/instance-id)
+# INSTANCE_ID was captured at the top of the script (while the IMDS token was fresh);
+# the instance ID is immutable for the instance's lifetime, so reusing it is safe.
 aws ssm put-parameter \
   --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
   --type String \
