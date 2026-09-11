@@ -43,6 +43,8 @@ gpgcheck=1
 gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
 EOF
 dnf install -y kubelet-${K8S_VERSION} kubeadm-${K8S_VERSION} kubectl-${K8S_VERSION}
+# git: required for `kubectl apply -k github.com/...` kustomization installs (004-2)
+dnf install -y git
 systemctl enable --now kubelet
 
 # --- Install AWS CLI v2 (needed for ssm put-parameter; not preinstalled on AL2023) ---
