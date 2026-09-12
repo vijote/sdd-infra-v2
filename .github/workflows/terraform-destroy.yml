@@ -4,7 +4,7 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_BOOTSTRAP_ROLE_ARN: ${{ vars.AWS_BOOTSTRAP_ROLE_ARN }}
   AWS_TERRAFORM_ROLE: ${{ vars.AWS_TERRAFORM_ROLE }}
-  TF_VAR_state_bucket_name: ${{ vars.TF_VAR_state_bucket_name }}
+  TF_VAR_state_bucket_name: ${{ vars.AWS_STATE_BUCKET_NAME }}
 
 on:
   workflow_dispatch:
@@ -54,10 +54,10 @@ jobs:
         run: |
           cd terraform/environments/dev
           terraform init \
-            -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
+            -backend-config="bucket=${{ env.AWS_STATE_BUCKET_NAME }}" \
             -backend-config="region=${{ env.AWS_REGION }}"
         env:
-          TF_VAR_state_bucket_name: ${{ env.TF_VAR_state_bucket_name }}
+          TF_VAR_state_bucket_name: ${{ env.AWS_STATE_BUCKET_NAME }}
           TF_VAR_region: ${{ env.AWS_REGION }}
 
       - name: Terraform Destroy
@@ -65,5 +65,5 @@ jobs:
           cd terraform/environments/dev
           terraform destroy -auto-approve
         env:
-          TF_VAR_state_bucket_name: ${{ env.TF_VAR_state_bucket_name }}
+          TF_VAR_state_bucket_name: ${{ env.AWS_STATE_BUCKET_NAME }}
           TF_VAR_region: ${{ env.AWS_REGION }}
