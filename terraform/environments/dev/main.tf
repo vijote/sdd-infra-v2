@@ -158,7 +158,7 @@ resource "null_resource" "apply_app_infrastructure" {
   depends_on = [module.worker_nodes]
 
   triggers = {
-    ebs_csi_ref     = "release-1.65"
+    ebs_csi_ref     = "v1.28.0" # 004-3: driver minor must match cluster K8s minor (1.28)
     ingress_ref     = "controller-v1.15.1"
     git_bootstrap   = "1" # 004-2: re-runs the provisioner to install git on the running control plane
   }
@@ -206,12 +206,12 @@ resource "null_resource" "apply_app_infrastructure" {
           \"set -e\",
           \"dnf install -y git\",
           \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl create namespace sdd-apps --dry-run=client -o yaml | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\",
-          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -k 'github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.65'\",
+          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -k 'github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=v1.28.0'\",
           \"echo '${base64encode(file("${path.module}/manifests/ebs-gp3-storageclass.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\",
           \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.15.1/deploy/static/provider/cloud/deploy.yaml\"
         ]" \
         --timeout-seconds 600 \
-        --comment "Apply app infrastructure: EBS CSI release-1.65 + ingress controller-v1.15.1 (004)" \
+        --comment "Apply app infrastructure: EBS CSI v1.28.0 + ingress controller-v1.15.1 (004/004-3)" \
         --query 'Command.CommandId' --output text)
       for i in $(seq 1 60); do
         STATUS=$(aws ssm get-command-invocation \
