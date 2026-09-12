@@ -1,5 +1,5 @@
 # Application backend scaffold (006-app-backend) — sdd-apps namespace.
-# Public image (crccheck/hello-world) pulled via NAT egress — no imagePullSecrets.
+# Public image (nginx:alpine) pulled via NAT egress — no imagePullSecrets.
 # No secrets in this manifest (no %%TOKEN%% placeholders).
 apiVersion: apps/v1
 kind: Deployment
@@ -20,21 +20,21 @@ spec:
     spec:
       containers:
         - name: app-backend
-          image: crccheck/hello-world:latest
+          image: nginx:alpine
           ports:
-            - containerPort: 8080
+            - containerPort: 80
               name: http
           readinessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: 80
             initialDelaySeconds: 10
             periodSeconds: 20
             timeoutSeconds: 3
@@ -58,4 +58,4 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 8080
+      targetPort: 80

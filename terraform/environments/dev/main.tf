@@ -325,13 +325,13 @@ resource "null_resource" "apply_mysql" {
 
 # Application backend scaffold (006-app-backend) — Deployment + Service in sdd-apps.
 # Applied on the control plane via SSM Run Command (same pattern as apply_mysql).
-# Public image (crccheck/hello-world) — no secrets, so the manifest is base64-encoded
+# Public image (nginx:alpine) — no secrets, so the manifest is base64-encoded
 # directly (no %%TOKEN%% replace chain).
 resource "null_resource" "apply_app_backend" {
   depends_on = [null_resource.apply_mysql]
 
   triggers = {
-    backend_image = "crccheck/hello-world:latest"
+    backend_image = "nginx:alpine"
   }
 
   provisioner "local-exec" {
