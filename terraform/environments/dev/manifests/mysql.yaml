@@ -1,0 +1,96 @@
+# MySQL 8.0.36 StatefulSet (005-mysql-statefulset) — sdd-apps namespace.
+# Secret values: %%MYSQL_ROOT_PASSWORD_B64%% / %%MYSQL_PASSWORD_B64%% are replaced by
+# Terraform with base64encode(data.aws_ssm_parameter.X.value) before the manifest is
+# base64-encoded for the SSM command (005 secrets pattern — Parameter Store is the
+# source of truth). MYSQL_USER / MYSQL_DATABASE are non-secret constants (sdd_app).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: sdd-apps
+type: Opaque
+data:
+  MYSQL_ROOT_PASSWORD: %%MYSQL_ROOT_PASSWORD_B64%%
+  MYSQL_USER: c2RkX2FwcA==
+  MYSQL_PASSWORD: %%MYSQL_PASSWORD_B64%%
+  MYSQL_DATABASE: c2RkX2FwcA==
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: sdd-apps
+  labels:
+    app: mysql
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0.36
+          ports:
+            - containerPort: 3306
+              name: mysql
+          envFrom:
+            - secretRef:
+                name: mysql-secret
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: 512Mi
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: ebs-gp3
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: sdd-apps
+  labels:
+    app: mysql
+spec:
+  type: ClusterIP
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      name: mysql

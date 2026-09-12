@@ -1,3 +1,14 @@
+# MySQL secrets (005-mysql-statefulset) — SSM Parameter Store is the single source of
+# truth (SecureString, created manually one-time). Read-only datasources; the deploy
+# role already has ssm:GetParameter via PowerUserAccess. No GitHub secrets involved.
+data "aws_ssm_parameter" "mysql_root_password" {
+  name = "/sdd-k8s-platform/secrets/mysql-root-password"
+}
+
+data "aws_ssm_parameter" "mysql_password" {
+  name = "/sdd-k8s-platform/secrets/mysql-password"
+}
+
 module "terraform_backend" {
   source = "../../modules/terraform-backend"
 
@@ -229,6 +240,84 @@ resource "null_resource" "apply_app_infrastructure" {
         sleep 10
       done
       echo "Application infrastructure apply timed out waiting for invocation" >&2
+      exit 1
+    EOT
+  }
+}
+
+# MySQL StatefulSet (005-mysql-statefulset) — Secret + StatefulSet + Service in sdd-apps.
+# Applied on the control plane via SSM Run Command (same pattern as apply_app_infrastructure).
+# Secrets come from SSM Parameter Store datasources: the manifest's %%TOKEN%% placeholders
+# are replaced with base64encode(param.value), then the whole manifest is base64-encoded
+# for the SSM command (003-6 pattern — zero JSON-escaping, passwords never on the command line).
+resource "null_resource" "apply_mysql" {
+  depends_on = [null_resource.apply_app_infrastructure]
+
+  triggers = {
+    mysql_image = "8.0.36"
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      # Wait for the control plane's SSM agent to register (same as apply_app_infrastructure).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion (003-11 per-run signal): the bootstrap-instance-id
+      # parameter must equal THIS control plane's instance ID.
+      for i in $(seq 1 60); do
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
+        exit 1
+      fi
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[
+          \"echo '${base64encode(replace(replace(file("${path.module}/manifests/mysql.yaml"), "%%MYSQL_ROOT_PASSWORD_B64%%", base64encode(data.aws_ssm_parameter.mysql_root_password.value)), "%%MYSQL_PASSWORD_B64%%", base64encode(data.aws_ssm_parameter.mysql_password.value)))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
+        ]" \
+        --timeout-seconds 600 \
+        --comment "Apply MySQL StatefulSet + Secret + Service (005)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 60); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "MySQL StatefulSet applied successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "MySQL apply failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "MySQL apply timed out waiting for invocation" >&2
       exit 1
     EOT
   }
