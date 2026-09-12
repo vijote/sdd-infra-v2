@@ -28,6 +28,24 @@ resource "aws_security_group" "control_plane" {
     cidr_blocks = [var.vpc_cidr]
   }
 
+  # Flannel VXLAN data plane (pod-to-pod traffic across nodes) — 003-14
+  ingress {
+    description = "Flannel VXLAN"
+    from_port   = 8472
+    to_port     = 8472
+    protocol    = "udp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  # Flannel API (subnet lease coordination) — 003-14
+  ingress {
+    description = "Flannel API"
+    from_port   = 4240
+    to_port     = 4240
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
   egress {
     description = "Allow all outbound"
     from_port   = 0
@@ -67,6 +85,24 @@ resource "aws_security_group" "worker" {
     description = "SSH"
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  # Flannel VXLAN data plane (pod-to-pod traffic across nodes) — 003-14
+  ingress {
+    description = "Flannel VXLAN"
+    from_port   = 8472
+    to_port     = 8472
+    protocol    = "udp"
+    cidr_blocks = [var.vpc_cidr]
+  }
+
+  # Flannel API (subnet lease coordination) — 003-14
+  ingress {
+    description = "Flannel API"
+    from_port   = 4240
+    to_port     = 4240
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
   }
