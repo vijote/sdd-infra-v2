@@ -452,7 +452,7 @@ resource "null_resource" "apply_app_frontend_ingress" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"echo '${base64encode(replace(file("${path.module}/manifests/app-frontend-ingress.yaml"), "%%INGRESS_HOST%%", var.ingress_host))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
+          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s && echo '${base64encode(replace(file("${path.module}/manifests/app-frontend-ingress.yaml"), "%%INGRESS_HOST%%", var.ingress_host))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
         ]" \
         --timeout-seconds 600 \
         --comment "Apply app-frontend Deployment + Service + Ingress (007)" \
