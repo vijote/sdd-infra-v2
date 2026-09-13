@@ -81,7 +81,7 @@ spec:
       serviceAccountName: aws-cloud-controller-manager
       containers:
         - name: aws-cloud-controller-manager
-          image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-cloud-controller-manager:v1.28.0
+          image: public.ecr.aws/eks-distro/kubernetes/cloud-provider-aws/cloud-controller-manager:v1.28.11-eks-1-28-64
           args:
             - --cloud-provider=aws
             - --configure-cloud-routes=false
