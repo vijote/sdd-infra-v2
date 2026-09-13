@@ -86,6 +86,7 @@ spec:
             - --cloud-provider=aws
             - --configure-cloud-routes=false
             - --cluster-name=sdd-k8s-platform
+            - --v=4
           livenessProbe:
             httpGet:
               path: /healthz
