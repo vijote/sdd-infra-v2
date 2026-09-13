@@ -534,7 +534,7 @@ resource "null_resource" "apply_aws_ccm" {
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
           \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl annotate svc ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-subnets='${join(",", module.vpc.public_subnet_ids)}' --overwrite && echo '${base64encode(file("${path.module}/manifests/aws-ccm.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/aws-cloud-controller-manager -n kube-system --timeout=300s\"
-        ]\" \
+        ]" \
         --timeout-seconds 600 \
         --comment "Deploy AWS CCM + annotate ingress Service with public subnets (004-4)" \
         --query 'Command.CommandId' --output text)
