@@ -8,7 +8,8 @@
 |------|-----------|-------------|
 | `terraform/environments/dev/manifests/aws-ccm.yaml` | Create | CCM ServiceAccount + ClusterRole + ClusterRoleBinding + Deployment (`kube-system`, 1 replica, `v1.28.x` image, args `--cloud-provider=aws --configure-cloud-routes=false --cluster-name=sdd-k8s-platform`) |
 | `terraform/modules/cluster-plumbing/main.tf` | Modify | Add inline policy `node_aws_ccm` to `sdd-k8s-platform-node-role` (ELB lifecycle + EC2 describe/tag, `Resource=*`) — mirrors `node_ebs_csi` |
-| `terraform/environments/dev/main.tf` | Modify | Add `null_resource.apply_aws_ccm`: `depends_on = [apply_app_frontend_ingress]`, trigger `ccm_version`, local-exec SSM command that (1) applies `aws-ccm.yaml`, (2) annotates `ingress-nginx-controller` Service with public subnet IDs, (3) waits for CCM rollout |
+| `terraform/modules/vpc/main.tf` | Modify | Add VPC tag `kubernetes.io/cluster/sdd-k8s-platform = "owned"` — the CCM identifies the cluster VPC by this tag; without it the CCM fails to init ("AWS cloud failed to find ClusterID") |
+| `terraform/environments/dev/main.tf` | Modify | Add `null_resource.apply_aws_ccm`: `depends_on = [apply_app_frontend_ingress, module.vpc]`, trigger `ccm_version`, local-exec SSM command that (1) annotates `ingress-nginx-controller` Service with public subnet IDs, (2) applies `aws-ccm.yaml`, (3) `rollout restart` (fresh pod sees the VPC tag), (4) waits for CCM rollout |
 
 ## 2. Key Design Decisions
 
@@ -32,7 +33,10 @@ service.beta.kubernetes.io/aws-load-balancer-subnets = <public subnet IDs, comma
 ```
 Public subnet IDs come from `module.vpc.public_subnet_ids` (existing output), injected via `%%TOKEN%%` replace (007 pattern).
 
-### 2.5 IAM (node role)
+### 2.5 VPC cluster tag (required for CCM init)
+The CCM identifies the cluster VPC by the tag `kubernetes.io/cluster/<--cluster-name>` = `owned` (or legacy `KubernetesCluster` = `<name>`). Without it, the CCM fails to init: `AWS cloud failed to find ClusterID`. Added to `aws_vpc.this` in `vpc/main.tf`. The `apply_aws_ccm` resource `depends_on = [module.vpc]` so the tag is applied before the SSM command runs, and the command does a `rollout restart` so a fresh pod (which re-reads the tag) replaces any crash-looping one.
+
+### 2.6 IAM (node role)
 New inline policy `node_aws_ccm` on `sdd-k8s-platform-node-role` (mirrors `node_ebs_csi`, `Resource=*`, dev-only). Actions:
 - `ec2`: `AssociateRouteTable`, `CreateTags`, `CreateVolume`, `CreateNetworkInterface`, `DeleteNetworkInterface`, `DeleteSecurityGroup`, `DeleteVolume`, `DeregisterInstancesFromLoadBalancer`, `Describe*`, `DetachVolume`, `ModifyInstanceAttribute`, `RegisterInstancesWithLoadBalancer`
 - `elasticloadbalancing`: `AddTags`, `CreateListener`, `CreateLoadBalancer`, `CreateTargetGroup`, `DeleteListener`, `DeleteLoadBalancer`, `DeleteTargetGroup`, `DescribeListeners`, `DescribeLoadBalancers`, `DescribeTags`, `DescribeTargetGroups`, `ModifyLoadBalancerAttributes`, `ModifyTargetGroup`, `RegisterTargets`, `RemoveTags`, `SetSecurityGroups`, `SetSubnets`
