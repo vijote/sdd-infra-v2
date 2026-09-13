@@ -6,6 +6,10 @@ resource "aws_vpc" "this" {
 
   tags = merge(var.tags, {
     Name = "sdd-k8s-platform-vpc"
+    # Required by the AWS CCM (004-4): it identifies the cluster VPC by this tag
+    # (key = kubernetes.io/cluster/<--cluster-name>, value = "owned"). Without it
+    # the CCM fails to init: "AWS cloud failed to find ClusterID".
+    "kubernetes.io/cluster/sdd-k8s-platform" = "owned"
   })
 }
 

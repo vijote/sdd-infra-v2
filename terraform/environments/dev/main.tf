@@ -487,10 +487,13 @@ resource "null_resource" "apply_app_frontend_ingress" {
 # manifest, (3) waits for the CCM rollout. Annotate-first avoids a race where the
 # CCM creates the ELB in the private node subnets before the annotation is present.
 resource "null_resource" "apply_aws_ccm" {
-  depends_on = [null_resource.apply_app_frontend_ingress]
+  # module.vpc: the VPC must carry the kubernetes.io/cluster/sdd-k8s-platform=owned
+  # tag (added in 004-4) BEFORE the CCM starts, or the CCM fails to init with
+  # "AWS cloud failed to find ClusterID".
+  depends_on = [null_resource.apply_app_frontend_ingress, module.vpc]
 
   triggers = {
-    ccm_version = "eks-distro-v1.28.11-eks-1-28-64"
+    ccm_version = "eks-distro-v1.28.11-eks-1-28-64+vpctag"
   }
 
   provisioner "local-exec" {
@@ -533,7 +536,7 @@ resource "null_resource" "apply_aws_ccm" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl annotate svc ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-subnets='${join(",", module.vpc.public_subnet_ids)}' --overwrite && echo '${base64encode(file("${path.module}/manifests/aws-ccm.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/aws-cloud-controller-manager -n kube-system --timeout=300s\"
+          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl annotate svc ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-subnets='${join(",", module.vpc.public_subnet_ids)}' --overwrite && echo '${base64encode(file("${path.module}/manifests/aws-ccm.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout restart deployment/aws-cloud-controller-manager -n kube-system && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/aws-cloud-controller-manager -n kube-system --timeout=300s\"
         ]" \
         --timeout-seconds 600 \
         --comment "Deploy AWS CCM + annotate ingress Service with public subnets (004-4)" \
