@@ -172,11 +172,48 @@ resource "aws_iam_role_policy" "node_ebs_csi" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = [
+      Effect = "Allow"
+      Action = [
         "ec2:CreateVolume", "ec2:DeleteVolume", "ec2:AttachVolume", "ec2:DetachVolume",
         "ec2:CreateTags", "ec2:DeleteTags", "ec2:DescribeVolumes", "ec2:DescribeTags",
         "ec2:DescribeInstances", "ec2:DescribeSnapshots", "ec2:ModifyVolume"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
+# Inline policy: ELB + EC2 lifecycle for the AWS Cloud Controller Manager (004-4).
+# The CCM runs as a pod on the nodes and uses the node's instance-profile credentials
+# via IMDS (no IRSA — kubeadm has no OIDC provider). Mirrors the node_ebs_csi pattern.
+resource "aws_iam_role_policy" "node_aws_ccm" {
+  name = "sdd-k8s-platform-node-aws-ccm"
+  role = aws_iam_role.node.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        # EC2 — node registration, ENI, volume + tag lifecycle
+        "ec2:AssociateRouteTable", "ec2:CreateTags", "ec2:CreateVolume",
+        "ec2:CreateNetworkInterface", "ec2:DeleteNetworkInterface",
+        "ec2:DeleteSecurityGroup", "ec2:DeleteVolume",
+        "ec2:DeregisterInstancesFromLoadBalancer", "ec2:Describe*",
+        "ec2:DetachVolume", "ec2:ModifyInstanceAttribute",
+        "ec2:RegisterInstancesWithLoadBalancer",
+        # ELB — listener / target group / LB lifecycle
+        "elasticloadbalancing:AddTags", "elasticloadbalancing:CreateListener",
+        "elasticloadbalancing:CreateLoadBalancer", "elasticloadbalancing:CreateTargetGroup",
+        "elasticloadbalancing:DeleteListener", "elasticloadbalancing:DeleteLoadBalancer",
+        "elasticloadbalancing:DeleteTargetGroup", "elasticloadbalancing:DescribeListeners",
+        "elasticloadbalancing:DescribeLoadBalancers", "elasticloadbalancing:DescribeTags",
+        "elasticloadbalancing:DescribeTargetGroups", "elasticloadbalancing:ModifyLoadBalancerAttributes",
+        "elasticloadbalancing:ModifyTargetGroup", "elasticloadbalancing:RegisterTargets",
+        "elasticloadbalancing:RemoveTags", "elasticloadbalancing:SetSecurityGroups",
+        "elasticloadbalancing:SetSubnets",
+        # ASG — describe only (CCM reads group membership)
+        "autoscaling:DescribeAutoScalingGroups"
       ]
       Resource = "*"
     }]
