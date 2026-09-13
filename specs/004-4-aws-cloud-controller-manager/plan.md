@@ -23,7 +23,7 @@ We author a **local** `aws-ccm.yaml` (matching the 005/006/007 pattern) rather t
 - `--cluster-name=sdd-k8s-platform` — tags the ELB + resources with `kubernetes.io/cluster/sdd-k8s-platform` (matches cluster identity)
 
 ### 2.3 Image
-`602401143452.dkr.ecr.us-west-2.amazonaws.com/eks/aws-cloud-controller-manager:v1.28.0` — the official EKS CCM image for v1.28.0 (matches cluster K8s 1.28.0 minor). Pulled via NAT egress, no `imagePullSecrets`.
+`public.ecr.aws/eks-distro/kubernetes/cloud-provider-aws/cloud-controller-manager:v1.28.11-eks-1-28-64` — the official EKS Distro CCM image (matches cluster K8s 1.28 minor). `public.ecr.aws` allows anonymous pulls (no `imagePullSecrets`), via NAT egress.
 
 ### 2.4 Internet-facing ELB (the annotation)
 All 3 nodes are in **private** subnets. The CCM defaults to creating the ELB in the node subnets → **internal** LB. To force an **internet-facing** ELB, the SSM command annotates the `ingress-nginx-controller` Service:
@@ -45,7 +45,7 @@ Single `&&`-chained command on the control plane (gated on `kubeadm-bootstrap-in
 3. `KUBECONFIG=... kubectl rollout status deployment/aws-cloud-controller-manager -n kube-system --timeout=300s`
 
 ## 4. Risks / Notes
-- **Image tag**: the first attempt used a guessed repo path (`aml/boilerplate/...`) → `ImagePullBackOff` (repo does not exist). Fixed to the official EKS image `eks/aws-cloud-controller-manager:v1.28.0`.
+- **Image**: two guessed images on the private `602401143452.dkr.ecr` account failed with `ImagePullBackOff` (no anonymous pull access). Fixed to the official EKS Distro image on `public.ecr.aws` (anonymous pulls allowed).
 - **ELB creation latency**: the CCM creates the ELB asynchronously after rollout; EXTERNAL-IP may take 1-2 min to appear (AC-003/004 account for this).
 - **No Terraform AWS resources**: the ELB is created by the CCM at runtime, not Terraform — so `terraform plan` shows only the IAM policy + null_resource (no ELB in state).
 - **Route53 deferred**: the ELB DNS name is the target; a follow-on spec adds the A record.

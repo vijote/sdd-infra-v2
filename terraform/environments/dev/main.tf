@@ -490,7 +490,7 @@ resource "null_resource" "apply_aws_ccm" {
   depends_on = [null_resource.apply_app_frontend_ingress]
 
   triggers = {
-    ccm_version = "eks-v1.28.0"
+    ccm_version = "eks-distro-v1.28.11-eks-1-28-64"
   }
 
   provisioner "local-exec" {
