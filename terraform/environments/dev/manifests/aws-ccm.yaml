@@ -1,0 +1,101 @@
+# AWS Cloud Controller Manager (004-4-aws-cloud-controller-manager) — kube-system.
+# kubeadm does NOT install the CCM; without it, LoadBalancer Services stay <pending>
+# (no ELB is created). This manifest deploys the CCM so it can provision the
+# ingress-nginx-controller ELB.
+#
+# K8s API: in-cluster ServiceAccount (no kubeconfig file).
+# AWS API: node instance profile via IMDS (no IRSA — kubeadm has no OIDC provider).
+#
+# --configure-cloud-routes=false: Flannel uses VXLAN (pod CIDR 192.168.0.0/16),
+# not VPC routes. Prevents the CCM from managing/conflicting with node routes.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aws-cloud-controller-manager
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: system:aws-cloud-controller-manager
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["nodes/status"]
+    verbs: ["patch", "update"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["list", "patch", "update", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["services/status"]
+    verbs: ["list", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["list", "get", "update", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "create", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: system:aws-cloud-controller-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:aws-cloud-controller-manager
+subjects:
+  - kind: ServiceAccount
+    name: aws-cloud-controller-manager
+    namespace: kube-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aws-cloud-controller-manager
+  namespace: kube-system
+  labels:
+    app: aws-cloud-controller-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: aws-cloud-controller-manager
+  template:
+    metadata:
+      labels:
+        app: aws-cloud-controller-manager
+    spec:
+      serviceAccountName: aws-cloud-controller-manager
+      containers:
+        - name: aws-cloud-controller-manager
+          image: 602401143452.dkr.ecr.us-west-2.amazonaws.com/aml/boilerplate/cloud-controller-manager:aws-1.28.0
+          args:
+            - --cloud-provider=aws
+            - --configure-cloud-routes=false
+            - --cluster-name=sdd-k8s-platform
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 10258
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi

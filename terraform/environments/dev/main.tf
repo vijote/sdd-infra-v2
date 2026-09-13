@@ -169,9 +169,9 @@ resource "null_resource" "apply_app_infrastructure" {
   depends_on = [module.worker_nodes]
 
   triggers = {
-    ebs_csi_ref     = "v1.28.0" # 004-3: driver minor must match cluster K8s minor (1.28)
-    ingress_ref     = "controller-v1.15.1"
-    git_bootstrap   = "1" # 004-2: re-runs the provisioner to install git on the running control plane
+    ebs_csi_ref   = "v1.28.0" # 004-3: driver minor must match cluster K8s minor (1.28)
+    ingress_ref   = "controller-v1.15.1"
+    git_bootstrap = "1" # 004-2: re-runs the provisioner to install git on the running control plane
   }
 
   provisioner "local-exec" {
@@ -473,6 +473,87 @@ resource "null_resource" "apply_app_frontend_ingress" {
         sleep 10
       done
       echo "App frontend + ingress apply timed out waiting for invocation" >&2
+      exit 1
+    EOT
+  }
+}
+
+# AWS Cloud Controller Manager (004-4-aws-cloud-controller-manager) — kube-system.
+# kubeadm does NOT install the CCM; without it, LoadBalancer Services stay <pending>
+# (no ELB is created). Applied on the control plane via SSM Run Command (same pattern
+# as apply_app_frontend_ingress). The command: (1) annotates the EXISTING
+# ingress-nginx-controller Service with the PUBLIC subnet IDs (forces an
+# internet-facing ELB — all nodes are in private subnets), (2) applies the CCM
+# manifest, (3) waits for the CCM rollout. Annotate-first avoids a race where the
+# CCM creates the ELB in the private node subnets before the annotation is present.
+resource "null_resource" "apply_aws_ccm" {
+  depends_on = [null_resource.apply_app_frontend_ingress]
+
+  triggers = {
+    ccm_version = "aws-1.28.0"
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      # Wait for the control plane's SSM agent to register (same as apply_app_frontend_ingress).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion (003-11 per-run signal): the bootstrap-instance-id
+      # parameter must equal THIS control plane's instance ID.
+      for i in $(seq 1 60); do
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
+        exit 1
+      fi
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[
+          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl annotate svc ingress-nginx-controller -n ingress-nginx service.beta.kubernetes.io/aws-load-balancer-subnets='${join(",", module.vpc.public_subnet_ids)}' --overwrite && echo '${base64encode(file("${path.module}/manifests/aws-ccm.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/aws-cloud-controller-manager -n kube-system --timeout=300s\"
+        ]\" \
+        --timeout-seconds 600 \
+        --comment "Deploy AWS CCM + annotate ingress Service with public subnets (004-4)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 60); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "AWS CCM deployed successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "AWS CCM deploy failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "AWS CCM deploy timed out waiting for invocation" >&2
       exit 1
     EOT
   }
