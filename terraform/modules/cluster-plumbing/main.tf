@@ -204,16 +204,10 @@ resource "aws_iam_role_policy" "node_aws_ccm" {
         "ec2:DeregisterInstancesFromLoadBalancer", "ec2:Describe*",
         "ec2:DetachVolume", "ec2:ModifyInstanceAttribute",
         "ec2:RegisterInstancesWithLoadBalancer",
-        # ELB — listener / target group / LB lifecycle
-        "elasticloadbalancing:AddTags", "elasticloadbalancing:CreateListener",
-        "elasticloadbalancing:CreateLoadBalancer", "elasticloadbalancing:CreateTargetGroup",
-        "elasticloadbalancing:DeleteListener", "elasticloadbalancing:DeleteLoadBalancer",
-        "elasticloadbalancing:DeleteTargetGroup", "elasticloadbalancing:DescribeListeners",
-        "elasticloadbalancing:DescribeLoadBalancers", "elasticloadbalancing:DescribeTags",
-        "elasticloadbalancing:DescribeTargetGroups", "elasticloadbalancing:ModifyLoadBalancerAttributes",
-        "elasticloadbalancing:ModifyTargetGroup", "elasticloadbalancing:RegisterTargets",
-        "elasticloadbalancing:RemoveTags", "elasticloadbalancing:SetSecurityGroups",
-        "elasticloadbalancing:SetSubnets",
+        # ELB — full ELBv2 API surface (CCM EnsureLoadBalancer needs attributes,
+        # rules, target health, listeners, account limits, services; the granular
+        # list was proven incomplete — 004-8 wildcard, dev-only)
+        "elasticloadbalancing:*",
         # ASG — describe only (CCM reads group membership)
         "autoscaling:DescribeAutoScalingGroups"
       ]
