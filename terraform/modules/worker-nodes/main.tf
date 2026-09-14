@@ -45,6 +45,7 @@ resource "aws_instance" "worker" {
   }
 
   tags = merge(var.tags, {
-    Name = "sdd-k8s-${each.key}"
+    Name                                    = "sdd-k8s-${each.key}"
+    "kubernetes.io/cluster/sdd-k8s-platform" = "owned"
   })
 }
