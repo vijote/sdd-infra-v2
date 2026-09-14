@@ -33,6 +33,7 @@ resource "aws_instance" "control_plane" {
   }
 
   tags = merge(var.tags, {
-    Name = "sdd-k8s-control-plane"
+    Name                                    = "sdd-k8s-control-plane"
+    "kubernetes.io/cluster/sdd-k8s-platform" = "owned"
   })
 }
