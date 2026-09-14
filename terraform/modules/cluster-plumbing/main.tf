@@ -198,7 +198,9 @@ resource "aws_iam_role_policy" "node_aws_ccm" {
         # EC2 — node registration, ENI, volume + tag lifecycle
         "ec2:AssociateRouteTable", "ec2:CreateTags", "ec2:CreateVolume",
         "ec2:CreateNetworkInterface", "ec2:DeleteNetworkInterface",
-        "ec2:DeleteSecurityGroup", "ec2:DeleteVolume",
+        "ec2:CreateSecurityGroup", "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupIngress", "ec2:DeleteSecurityGroup",
+        "ec2:DeleteVolume",
         "ec2:DeregisterInstancesFromLoadBalancer", "ec2:Describe*",
         "ec2:DetachVolume", "ec2:ModifyInstanceAttribute",
         "ec2:RegisterInstancesWithLoadBalancer",
