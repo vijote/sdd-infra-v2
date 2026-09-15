@@ -14,6 +14,22 @@ SSM_PARAM_NAME="/sdd-k8s-platform/kubeadm-join-command"
 CONTROL_PLANE_INSTANCE_ID="%%CONTROL_PLANE_INSTANCE_ID%%"
 BOOTSTRAP_ID_PARAM="/sdd-k8s-platform/kubeadm-bootstrap-instance-id"
 
+# --- Detect instance ID + AZ via IMDSv2 (AL2023 enforces token-based metadata) ---
+# Used to set the node's spec.providerID (aws:///<az>/<id>) at join time, which the
+# AWS CCM requires to map nodes to EC2 instances for ELB target registration (004-11).
+IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+  -H "X-aws-ec2-metadata-token-ttl-seconds: 300")
+INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
+  http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)
+# Fail fast if IMDS returned empty values (e.g. token expired or IMDS unreachable).
+[ -n "${INSTANCE_ID}" ] && [ -n "${AZ}" ] || {
+  echo "IMDS fetch failed (INSTANCE_ID='${INSTANCE_ID}' AZ='${AZ}')" >&2
+  exit 1
+}
+echo "Worker instance: ${INSTANCE_ID} in ${AZ}"
+
 # --- Install and configure containerd (systemd cgroup driver) ---
 dnf install -y containerd
 containerd config default > /etc/containerd/config.toml
@@ -76,6 +92,8 @@ JOIN_COMMAND=$(aws ssm get-parameter \
   --with-decryption \
   --query 'Parameter.Value' \
   --output text)
-eval "${JOIN_COMMAND}"
+# --provider-id sets spec.providerID (aws:///<az>/<id>) so the AWS CCM can map this
+# node to its EC2 instance for ELB target registration (004-11).
+eval "${JOIN_COMMAND} --provider-id aws://${AZ}/${INSTANCE_ID}"
 
-echo "Bootstrap complete. Worker joined the cluster."
+echo "Bootstrap complete. Worker joined the cluster (providerID aws://${AZ}/${INSTANCE_ID})."

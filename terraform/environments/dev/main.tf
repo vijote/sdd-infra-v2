@@ -491,11 +491,92 @@ resource "null_resource" "apply_app_frontend_ingress" {
 # internet-facing ELB — all nodes are in private subnets), (2) applies the CCM
 # manifest, (3) waits for the CCM rollout. Annotate-first avoids a race where the
 # CCM creates the ELB in the private node subnets before the annotation is present.
+# 004-11: set spec.providerID (aws:///<az>/<id>) on every node BEFORE the CCM
+# starts, or the CCM cannot map nodes to EC2 instances and never registers ELB
+# targets (log: "node has no providerID" -> ELB Instances: [] -> curl 000).
+# Idempotent in-place repair: the bootstrap scripts (004-11) set providerID at
+# init/join time for future recreations; this patches the CURRENT cluster's
+# nodes without a terraform destroy.
+resource "null_resource" "set_node_provider_ids" {
+  depends_on = [null_resource.apply_app_frontend_ingress]
+
+  triggers = {
+    provider_id_ref = "1"
+    instance_id     = module.control_plane.control_plane_instance_id # 004-10: re-run on cluster recreation
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      # Wait for the control plane's SSM agent to register (same as apply_aws_ccm).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion (003-11 per-run signal).
+      for i in $(seq 1 60); do
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
+        exit 1
+      fi
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[
+          \"echo '${base64encode(file("${path.module}/scripts/set-node-provider-ids.sh"))}' | base64 -d | bash\"
+        ]" \
+        --timeout-seconds 300 \
+        --comment "Set node spec.providerID for CCM ELB target registration (004-11)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 30); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "Node providerIDs set successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "Node providerID repair failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "Node providerID repair timed out waiting for invocation" >&2
+      exit 1
+    EOT
+  }
+}
+
 resource "null_resource" "apply_aws_ccm" {
   # module.vpc: the VPC must carry the kubernetes.io/cluster/sdd-k8s-platform=owned
   # tag (added in 004-4) BEFORE the CCM starts, or the CCM fails to init with
   # "AWS cloud failed to find ClusterID".
-  depends_on = [null_resource.apply_app_frontend_ingress, module.vpc]
+  # set_node_provider_ids: nodes must have spec.providerID BEFORE the CCM starts,
+  # or it cannot register ELB targets (004-11).
+  depends_on = [null_resource.apply_app_frontend_ingress, null_resource.set_node_provider_ids, module.vpc]
 
   triggers = {
     ccm_version   = "eks-distro-v1.28.11-eks-1-28-64+vpctag"
