@@ -91,6 +91,7 @@ spec:
             httpGet:
               path: /healthz
               port: 10258
+              scheme: HTTPS
             initialDelaySeconds: 15
             periodSeconds: 20
           resources:
