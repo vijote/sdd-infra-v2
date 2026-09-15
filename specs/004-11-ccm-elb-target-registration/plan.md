@@ -7,8 +7,8 @@
 | File | Operation | Change |
 |------|-----------|--------|
 | `terraform/environments/dev/manifests/aws-ccm.yaml` | Modify | CCM ClusterRole: add `get` + `watch` to the `services` and `services/status` rules (lines ~22–49). |
-| `terraform/modules/control-plane/bootstrap.sh` | Modify | Fetch AZ via IMDSv2 (extend existing fail-fast guard); add `providerID: aws://${AZ}/${INSTANCE_ID}` to `nodeRegistration` in `kubeadm-config.yaml`. |
-| `terraform/modules/worker-nodes/bootstrap.sh` | Modify | Add IMDSv2 fetch block (token + `INSTANCE_ID` + `AZ`, fail-fast guard); append `--provider-id aws://${AZ}/${INSTANCE_ID}` to the `kubeadm join` command. |
+| `terraform/modules/control-plane/bootstrap.sh` | Modify | Fetch AZ via IMDSv2 (extend existing fail-fast guard); configure `KUBELET_EXTRA_ARGS` in `/etc/sysconfig/kubelet` and `kubeletExtraArgs.provider-id: aws://${AZ}/${INSTANCE_ID}` in `kubeadm-config.yaml`. |
+| `terraform/modules/worker-nodes/bootstrap.sh` | Modify | Add IMDSv2 fetch block (token + `INSTANCE_ID` + `AZ`, fail-fast guard); configure `KUBELET_EXTRA_ARGS` in `/etc/sysconfig/kubelet` (since `kubeadm join` has no `--provider-id` CLI flag). |
 | `terraform/environments/dev/main.tf` | Modify | New `null_resource.set_node_provider_ids` (SSM Run Command on the control plane: map each node's InternalIP → instance ID + AZ via `aws ec2 describe-instances`, then `kubectl patch node ... spec.providerID`); chained before `apply_aws_ccm`; triggers = `instance_id` + `provider_id_ref = "1"`. |
 
 ## 2. Architectural Boundaries & Dependency Flow

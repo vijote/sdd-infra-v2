@@ -47,6 +47,14 @@ gpgcheck=1
 gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
 EOF
 dnf install -y kubelet-${K8S_VERSION} kubeadm-${K8S_VERSION} kubectl-${K8S_VERSION}
+
+# --- Configure kubelet extra args with the provider-id ---
+# Sets spec.providerID (aws:///<az>/<id>) so the AWS CCM can map this node to its
+# EC2 instance for ELB target registration (004-11).
+# Note: kubeadm join does not accept a --provider-id CLI flag, so we supply it via KUBELET_EXTRA_ARGS.
+mkdir -p /etc/sysconfig
+echo "KUBELET_EXTRA_ARGS=\"--provider-id=aws://${AZ}/${INSTANCE_ID}\"" > /etc/sysconfig/kubelet
+
 systemctl enable --now kubelet
 
 # --- Install AWS CLI v2 (needed for ssm get-parameter; not preinstalled on AL2023) ---
@@ -92,8 +100,6 @@ JOIN_COMMAND=$(aws ssm get-parameter \
   --with-decryption \
   --query 'Parameter.Value' \
   --output text)
-# --provider-id sets spec.providerID (aws:///<az>/<id>) so the AWS CCM can map this
-# node to its EC2 instance for ELB target registration (004-11).
-eval "${JOIN_COMMAND} --provider-id aws://${AZ}/${INSTANCE_ID}"
+eval "${JOIN_COMMAND}"
 
 echo "Bootstrap complete. Worker joined the cluster (providerID aws://${AZ}/${INSTANCE_ID})."

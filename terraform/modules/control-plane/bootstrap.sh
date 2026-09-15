@@ -47,6 +47,13 @@ EOF
 dnf install -y kubelet-${K8S_VERSION} kubeadm-${K8S_VERSION} kubectl-${K8S_VERSION}
 # git: required for `kubectl apply -k github.com/...` kustomization installs (004-2)
 dnf install -y git
+
+# --- Configure kubelet extra args with the provider-id ---
+# Sets spec.providerID (aws:///<az>/<id>) so the AWS CCM can map this node to its
+# EC2 instance for ELB target registration (004-11).
+mkdir -p /etc/sysconfig
+echo "KUBELET_EXTRA_ARGS=\"--provider-id=aws://${AZ}/${INSTANCE_ID}\"" > /etc/sysconfig/kubelet
+
 systemctl enable --now kubelet
 
 # --- Install AWS CLI v2 (needed for ssm put-parameter; not preinstalled on AL2023) ---
@@ -74,7 +81,8 @@ localAPIEndpoint:
 nodeRegistration:
   name: control-plane-0
   criSocket: unix:///run/containerd/containerd.sock
-  providerID: aws://${AZ}/${INSTANCE_ID}
+  kubeletExtraArgs:
+    provider-id: aws://${AZ}/${INSTANCE_ID}
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration

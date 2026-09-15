@@ -47,13 +47,15 @@
        http://169.254.169.254/latest/meta-data/placement/availability-zone)
      ```
      and extend the fail-fast guard to include `AZ`.
-  2. Add `providerID` to the `nodeRegistration` block:
+  2. Configure kubelet extra args with provider-id:
      ```yaml
      nodeRegistration:
        name: control-plane-0
        criSocket: unix:///run/containerd/containerd.sock
-       providerID: aws://${AZ}/${INSTANCE_ID}
+       kubeletExtraArgs:
+         provider-id: aws://${AZ}/${INSTANCE_ID}
      ```
+     and `/etc/sysconfig/kubelet` with `KUBELET_EXTRA_ARGS="--provider-id=aws://${AZ}/${INSTANCE_ID}"`.
 - **Why**: sets the control-plane node's `spec.providerID` at `kubeadm init` time, so the CCM can resolve it to an EC2 instance.
 
 ### 2.3 Worker Bootstrap (Modify — `terraform/modules/worker-nodes/bootstrap.sh`)
@@ -69,11 +71,13 @@
        http://169.254.169.254/latest/meta-data/placement/availability-zone)
      [ -n "${INSTANCE_ID}" ] && [ -n "${AZ}" ] || { echo "IMDS fetch failed" >&2; exit 1; }
      ```
-  2. Append `--provider-id` to the join command:
+  2. Configure `/etc/sysconfig/kubelet` with `KUBELET_EXTRA_ARGS="--provider-id=aws://${AZ}/${INSTANCE_ID}"` before joining (kubeadm join does not take a `--provider-id` CLI flag):
      ```bash
-     eval "${JOIN_COMMAND} --provider-id aws://${AZ}/${INSTANCE_ID}"
+     mkdir -p /etc/sysconfig
+     echo "KUBELET_EXTRA_ARGS=\"--provider-id=aws://${AZ}/${INSTANCE_ID}\"" > /etc/sysconfig/kubelet
+     eval "${JOIN_COMMAND}"
      ```
-- **Why**: sets each worker node's `spec.providerID` at `kubeadm join` time.
+- **Why**: sets each worker node's `spec.providerID` at `kubelet` registration time.
 
 ### 2.4 Node providerID Repair (New — `terraform/environments/dev/main.tf`)
 - **Target**: a new `null_resource` `set_node_provider_ids`, inserted into the apply chain before `apply_aws_ccm` (i.e. `apply_aws_ccm` gains `depends_on = [null_resource.set_node_provider_ids, ...]`, or the new resource is chained between `apply_app_frontend_ingress` and `apply_aws_ccm`)
