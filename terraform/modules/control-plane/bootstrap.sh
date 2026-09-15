@@ -19,12 +19,14 @@ PRIVATE_IP=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
   http://169.254.169.254/latest/meta-data/local-ipv4)
 INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
   http://169.254.169.254/latest/meta-data/instance-id)
+AZ=$(curl -s -H "X-aws-ec2-metadata-token: ${IMDS_TOKEN}" \
+  http://169.254.169.254/latest/meta-data/placement/availability-zone)
 # Fail fast if IMDS returned empty values (e.g. token expired or IMDS unreachable).
-[ -n "${PRIVATE_IP}" ] && [ -n "${INSTANCE_ID}" ] || {
-  echo "IMDS fetch failed (PRIVATE_IP='${PRIVATE_IP}' INSTANCE_ID='${INSTANCE_ID}')" >&2
+[ -n "${PRIVATE_IP}" ] && [ -n "${INSTANCE_ID}" ] && [ -n "${AZ}" ] || {
+  echo "IMDS fetch failed (PRIVATE_IP='${PRIVATE_IP}' INSTANCE_ID='${INSTANCE_ID}' AZ='${AZ}')" >&2
   exit 1
 }
-echo "Control plane private IP: ${PRIVATE_IP} (instance ${INSTANCE_ID})"
+echo "Control plane private IP: ${PRIVATE_IP} (instance ${INSTANCE_ID} in ${AZ})"
 
 # --- Install and configure containerd (systemd cgroup driver) ---
 dnf install -y containerd
@@ -72,6 +74,7 @@ localAPIEndpoint:
 nodeRegistration:
   name: control-plane-0
   criSocket: unix:///run/containerd/containerd.sock
+  providerID: aws://${AZ}/${INSTANCE_ID}
 ---
 apiVersion: kubeadm.k8s.io/v1beta3
 kind: ClusterConfiguration
