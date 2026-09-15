@@ -88,6 +88,7 @@ resource "null_resource" "apply_flannel_cni" {
   triggers = {
     flannel_version = local.flannel_version
     pod_cidr        = "192.168.0.0/16"
+    instance_id     = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
   provisioner "local-exec" {
@@ -172,6 +173,7 @@ resource "null_resource" "apply_app_infrastructure" {
     ebs_csi_ref   = "v1.28.0" # 004-3: driver minor must match cluster K8s minor (1.28)
     ingress_ref   = "controller-v1.15.1"
     git_bootstrap = "1" # 004-2: re-runs the provisioner to install git on the running control plane
+    instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
   provisioner "local-exec" {
@@ -255,6 +257,7 @@ resource "null_resource" "apply_mysql" {
 
   triggers = {
     mysql_image = "8.0.36"
+    instance_id = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
   provisioner "local-exec" {
@@ -332,6 +335,7 @@ resource "null_resource" "apply_app_backend" {
 
   triggers = {
     backend_image = "nginx:alpine"
+    instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
   provisioner "local-exec" {
@@ -410,6 +414,7 @@ resource "null_resource" "apply_app_frontend_ingress" {
   triggers = {
     frontend_image = "nginx:alpine"
     ingress_host   = var.ingress_host
+    instance_id    = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
   provisioner "local-exec" {
@@ -495,6 +500,7 @@ resource "null_resource" "apply_aws_ccm" {
   triggers = {
     ccm_version   = "eks-distro-v1.28.11-eks-1-28-64+vpctag"
     ccm_log_level = "4"
+    instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
   provisioner "local-exec" {
