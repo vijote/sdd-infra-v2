@@ -60,6 +60,32 @@ jobs:
           TF_VAR_state_bucket_name: ${{ env.TF_VAR_state_bucket_name }}
           TF_VAR_region: ${{ env.AWS_REGION }}
 
+      - name: Pre-Destroy ELB Cleanup
+        run: |
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters "Name=tag-key,Values=kubernetes.io/cluster/sdd-k8s-platform" \
+            --query 'Vpcs[0].VpcId' --output text)
+          if [ -z "$VPC_ID" ] || [ "$VPC_ID" = "None" ]; then
+            exit 0
+          fi
+          LB_NAMES=$(aws elb describe-load-balancers \
+            --query "LoadBalancerDescriptions[?VpcId=='${VPC_ID}'].LoadBalancerName" \
+            --output text)
+          if [ -z "$LB_NAMES" ] || [ "$LB_NAMES" = "None" ]; then
+            exit 0
+          fi
+          for LB in $LB_NAMES; do
+            aws elb delete-load-balancer --load-balancer-name "$LB"
+            for i in $(seq 1 30); do
+              EXISTS=$(aws elb describe-load-balancers --load-balancer-names "$LB" \
+                --query 'LoadBalancerDescriptions[0].LoadBalancerName' --output text 2>/dev/null) || EXISTS=""
+              if [ -z "$EXISTS" ] || [ "$EXISTS" = "None" ]; then
+                break
+              fi
+              sleep 10
+            done
+          done
+
       - name: Terraform Destroy
         run: |
           cd terraform/environments/dev
