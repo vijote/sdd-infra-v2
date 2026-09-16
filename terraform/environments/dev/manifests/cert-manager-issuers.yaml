@@ -1,0 +1,26 @@
+# ClusterIssuers (004-1-cert-manager) — applied on the control plane via SSM
+# (base64-encoded into the apply_cert_manager command; no secrets, no %%TOKEN%%).
+# selfsigned: default dev TLS, no DNS dependency.
+# letsencrypt-prod: ACME HTTP-01 via the nginx ingress class (requires a live
+# domain pointing at the ingress LB — configured in 005).
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@example.com
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
