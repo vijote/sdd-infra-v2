@@ -247,6 +247,87 @@ resource "null_resource" "apply_app_infrastructure" {
   }
 }
 
+# cert-manager + ClusterIssuers (004-1-cert-manager) — cert-manager namespace.
+# Applied on the control plane via SSM Run Command (same pattern as apply_app_infrastructure).
+# (1) applies the upstream static manifest (controller + webhook + cainjector + CRDs),
+# (2) applies the base64-encoded ClusterIssuers manifest (selfsigned + letsencrypt-prod).
+# depends_on apply_app_infrastructure: the letsencrypt-prod HTTP-01 solver needs the
+# ingress controller (installed there). The ALB (CCM) is only needed at issuance time (005).
+resource "null_resource" "apply_cert_manager" {
+  depends_on = [null_resource.apply_app_infrastructure]
+
+  triggers = {
+    cert_manager_ref = "v1.21.1"
+    instance_id      = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      # Wait for the control plane's SSM agent to register (same as apply_app_infrastructure).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion (003-11 per-run signal): the bootstrap-instance-id
+      # parameter must equal THIS control plane's instance ID.
+      for i in $(seq 1 60); do
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
+        exit 1
+      fi
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[
+          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.yaml\",
+          \"echo '${base64encode(file("${path.module}/manifests/cert-manager-issuers.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
+        ]" \
+        --timeout-seconds 600 \
+        --comment "Deploy cert-manager v1.21.1 + ClusterIssuers (004-1)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 60); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "cert-manager + ClusterIssuers applied successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "cert-manager apply failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "cert-manager apply timed out waiting for invocation" >&2
+      exit 1
+    EOT
+  }
+}
+
 # MySQL StatefulSet (005-mysql-statefulset) — Secret + StatefulSet + Service in sdd-apps.
 # Applied on the control plane via SSM Run Command (same pattern as apply_app_infrastructure).
 # Secrets come from SSM Parameter Store datasources: the manifest's %%TOKEN%% placeholders
