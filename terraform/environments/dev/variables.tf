@@ -23,6 +23,6 @@ variable "availability_zones" {
 
 variable "ingress_host" {
   type        = string
-  description = "Ingress host (placeholder now; real Route53 domain later)"
-  default     = "app.local"
+  description = "Ingress host (Route53 domain)"
+  default     = "demo.vijote.dev"
 }

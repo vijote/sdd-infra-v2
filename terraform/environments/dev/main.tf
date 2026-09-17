@@ -490,7 +490,12 @@ resource "null_resource" "apply_app_backend" {
 # as apply_app_backend). The manifest's %%INGRESS_HOST%% token is replaced with
 # var.ingress_host before base64 (005 replace pattern, applied to a non-secret).
 resource "null_resource" "apply_app_frontend_ingress" {
-  depends_on = [null_resource.apply_app_backend]
+  # 009: the Ingress now carries a tls block + a cert-manager Certificate (letsencrypt-prod
+  # HTTP-01). It needs the issuers to exist (apply_cert_manager). It does NOT depend on
+  # apply_route53_record — that would be a cycle (route53_record -> apply_aws_ccm -> this
+  # resource). The Certificate stays in "Issuing" until DNS is live; cert-manager retries
+  # HTTP-01 automatically, so it self-heals once the ALIAS record propagates.
+  depends_on = [null_resource.apply_app_backend, null_resource.apply_cert_manager]
 
   triggers = {
     frontend_image = "nginx:alpine"
@@ -726,6 +731,84 @@ resource "null_resource" "apply_aws_ccm" {
         sleep 10
       done
       echo "AWS CCM deploy timed out waiting for invocation" >&2
+      exit 1
+    EOT
+  }
+}
+
+# Route 53 ALIAS record (009-route53-domain) — demo.vijote.dev -> the CCM-created ALB.
+# The ALB is out of Terraform state (CCM-created), so the record is created via SSM on
+# the control plane AFTER the CCM has produced the ALB. The control plane uses the node
+# instance profile, which carries the route53:* actions (node_route53 policy in
+# module.cluster_plumbing) — hence the module dependency. Idempotent (UPSERT).
+resource "null_resource" "apply_route53_record" {
+  depends_on = [null_resource.apply_aws_ccm, module.cluster_plumbing]
+
+  triggers = {
+    domain      = var.ingress_host
+    instance_id = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      # Wait for the control plane's SSM agent to register (same as apply_aws_ccm).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion (003-11 per-run signal).
+      for i in $(seq 1 60); do
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
+        exit 1
+      fi
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[
+          \"echo '${base64encode(file("${path.module}/scripts/create-route53-record.sh"))}' | base64 -d | bash\"
+        ]" \
+        --timeout-seconds 600 \
+        --comment "Create Route53 ALIAS record for demo.vijote.dev (009)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 60); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "Route 53 ALIAS record created successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "Route 53 record creation failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "Route 53 record creation timed out waiting for invocation" >&2
       exit 1
     EOT
   }

@@ -69,6 +69,10 @@ metadata:
     app: app-frontend
 spec:
   ingressClassName: nginx
+  tls:
+    - hosts:
+        - %%INGRESS_HOST%%
+      secretName: demo-vijote-dev-tls
   rules:
     - host: %%INGRESS_HOST%%
       http:
@@ -87,3 +91,19 @@ spec:
                 name: app-frontend
                 port:
                   number: 80
+---
+# Let's Encrypt certificate (009-route53-domain) — issued by cert-manager via the
+# letsencrypt-prod ClusterIssuer (HTTP-01 through the nginx ingress). Requires the
+# Route 53 ALIAS record to be live so ACME can reach the challenge path.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: demo-vijote-dev
+  namespace: sdd-apps
+spec:
+  secretName: demo-vijote-dev-tls
+  dnsNames:
+    - %%INGRESS_HOST%%
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
