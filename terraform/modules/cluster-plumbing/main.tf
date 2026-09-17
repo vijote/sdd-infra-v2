@@ -216,6 +216,29 @@ resource "aws_iam_role_policy" "node_aws_ccm" {
   })
 }
 
+# Inline policy: Route 53 record management for the SSM-driven ALIAS record (009).
+# The control plane (which runs the SSM commands) uses the node instance profile,
+# so these actions let the apply_route53_record command look up the hosted zone and
+# UPSERT the demo.vijote.dev ALIAS record. Dev-only wildcard (004-8 precedent);
+# scope to the vijote.dev zone ID in prod.
+resource "aws_iam_role_policy" "node_route53" {
+  name = "sdd-k8s-platform-node-route53"
+  role = aws_iam_role.node.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "route53:ChangeResourceRecordSets",
+        "route53:ListResourceRecordSets",
+        "route53:GetHostedZone"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 # Instance profile for worker nodes
 resource "aws_iam_instance_profile" "node" {
   name = "sdd-k8s-platform-node-profile"
