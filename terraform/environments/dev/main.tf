@@ -257,7 +257,7 @@ resource "null_resource" "apply_cert_manager" {
   depends_on = [null_resource.apply_app_infrastructure]
 
   triggers = {
-    cert_manager_ref = "v1.21.1"
+    cert_manager_ref = "v1.19.4" # 004-13: v1.20+ CRDs require K8s 1.30+ (selectableFields)
     instance_id      = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
@@ -301,11 +301,11 @@ resource "null_resource" "apply_cert_manager" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.21.1/cert-manager.yaml\",
+          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.4/cert-manager.yaml\",
           \"echo '${base64encode(file("${path.module}/manifests/cert-manager-issuers.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
         ]" \
         --timeout-seconds 600 \
-        --comment "Deploy cert-manager v1.21.1 + ClusterIssuers (004-1)" \
+        --comment "Deploy cert-manager v1.19.4 + ClusterIssuers (004-1/004-13)" \
         --query 'Command.CommandId' --output text)
       for i in $(seq 1 60); do
         STATUS=$(aws ssm get-command-invocation \
