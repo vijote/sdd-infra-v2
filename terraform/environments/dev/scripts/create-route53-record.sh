@@ -54,7 +54,8 @@ CHANGE_BATCH=$(cat <<EOF
         "SetIdentifier": "${SET_ID}",
         "AliasTarget": {
           "HostedZoneId": "${ELB_ZONE_ID}",
-          "DNSName": "${ALB_DNS}"
+          "DNSName": "${ALB_DNS}",
+          "EvaluateTargetHealth": false
         }
       }
     }
