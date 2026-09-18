@@ -747,6 +747,7 @@ resource "null_resource" "apply_route53_record" {
   triggers = {
     domain      = var.ingress_host
     instance_id = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
+    route53_ref = "route53-wildcard" # 009-1: re-run SSM command after node_route53 wildcard (an IAM edit does not change domain/instance_id, and the command string is not in null_resource state)
   }
 
   provisioner "local-exec" {
