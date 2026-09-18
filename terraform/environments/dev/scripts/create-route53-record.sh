@@ -62,7 +62,7 @@ CHANGE_BATCH=$(cat <<EOF
 }
 EOF
 )
-aws route53 change-resource-record-set \
+aws route53 change-resource-record-sets \
   --hosted-zone-id "$ZONE_ID" \
   --change-batch "$CHANGE_BATCH"
 echo "Route 53 ALIAS record upserted: ${DOMAIN}. -> ${ALB_DNS}"
