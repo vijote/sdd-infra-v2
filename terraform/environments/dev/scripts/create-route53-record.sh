@@ -14,7 +14,6 @@ K="sudo KUBECONFIG=/etc/kubernetes/admin.conf kubectl"
 DOMAIN="demo.vijote.dev"
 ZONE_NAME="vijote.dev."
 ELB_ZONE_ID="Z35SXDOTRQ7X7K"   # us-east-1 ELB hosted zone (AWS-documented)
-SET_ID="demo-vijote-dev-alias"
 
 # (1) Poll the ALB DNS name from the ingress-nginx Service status (CCM populates it).
 ALB_DNS=""
@@ -51,7 +50,6 @@ CHANGE_BATCH=$(cat <<EOF
       "ResourceRecordSet": {
         "Name": "${DOMAIN}.",
         "Type": "A",
-        "SetIdentifier": "${SET_ID}",
         "AliasTarget": {
           "HostedZoneId": "${ELB_ZONE_ID}",
           "DNSName": "${ALB_DNS}",
