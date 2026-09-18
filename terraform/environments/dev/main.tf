@@ -257,7 +257,7 @@ resource "null_resource" "apply_cert_manager" {
   depends_on = [null_resource.apply_app_infrastructure]
 
   triggers = {
-    cert_manager_ref = "v1.19.4+webhook-gate" # 004-13: v1.20+ CRDs need K8s 1.30+; 004-14: gate issuers on webhook rollout
+    cert_manager_ref = "v1.19.4+webhook-gate+issuer-retry" # 004-13: v1.20+ CRDs need K8s 1.30+; 004-14: gate issuers on webhook rollout; 004-15: retry ClusterIssuer apply (webhook startup race)
     instance_id      = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
@@ -302,10 +302,10 @@ resource "null_resource" "apply_cert_manager" {
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
           \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.19.4/cert-manager.yaml && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/cert-manager-webhook -n cert-manager --timeout=300s && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/cert-manager-cainjector -n cert-manager --timeout=300s\",
-          \"echo '${base64encode(file("${path.module}/manifests/cert-manager-issuers.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
+          \"for i in 1 2 3 4 5 6 7 8 9 10; do if echo '${base64encode(file("${path.module}/manifests/cert-manager-issuers.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -; then echo 'ClusterIssuers applied successfully'; exit 0; fi; echo 'ClusterIssuer apply failed, retrying in 5s' >&2; sleep 5; done; echo 'ClusterIssuer apply failed after 10 attempts' >&2; exit 1\"
         ]" \
         --timeout-seconds 600 \
-        --comment "Deploy cert-manager v1.19.4 + webhook gate + ClusterIssuers (004-1/004-13/004-14)" \
+        --comment "Deploy cert-manager v1.19.4 + webhook gate + ClusterIssuers + issuer retry (004-1/004-13/004-14/004-15)" \
         --query 'Command.CommandId' --output text)
       for i in $(seq 1 60); do
         STATUS=$(aws ssm get-command-invocation \
