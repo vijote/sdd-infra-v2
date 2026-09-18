@@ -305,7 +305,7 @@ resource "null_resource" "apply_cert_manager" {
           \"for i in 1 2 3 4 5 6 7 8 9 10; do if echo '${base64encode(file("${path.module}/manifests/cert-manager-issuers.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -; then echo 'ClusterIssuers applied successfully'; exit 0; fi; echo 'ClusterIssuer apply failed, retrying in 5s' >&2; sleep 5; done; echo 'ClusterIssuer apply failed after 10 attempts' >&2; exit 1\"
         ]" \
         --timeout-seconds 600 \
-        --comment "Deploy cert-manager v1.19.4 + webhook gate + ClusterIssuers + issuer retry (004-1/004-13/004-14/004-15)" \
+        --comment "Deploy cert-manager v1.19.4 + webhook gate + ClusterIssuers + retry (004-1/004-13/004-14/004-15)" \
         --query 'Command.CommandId' --output text)
       for i in $(seq 1 60); do
         STATUS=$(aws ssm get-command-invocation \
