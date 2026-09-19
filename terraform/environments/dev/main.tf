@@ -492,9 +492,9 @@ resource "null_resource" "apply_app_backend" {
 resource "null_resource" "apply_app_frontend_ingress" {
   # 009: the Ingress now carries a tls block + a cert-manager Certificate (letsencrypt-prod
   # HTTP-01). It needs the issuers to exist (apply_cert_manager). It does NOT depend on
-  # apply_route53_record — that would be a cycle (route53_record -> apply_aws_ccm -> this
+  # apply_cloudflare_record — that would be a cycle (cloudflare_record -> apply_aws_ccm -> this
   # resource). The Certificate stays in "Issuing" until DNS is live; cert-manager retries
-  # HTTP-01 automatically, so it self-heals once the ALIAS record propagates.
+  # HTTP-01 automatically, so it self-heals once the CNAME record propagates.
   depends_on = [null_resource.apply_app_backend, null_resource.apply_cert_manager]
 
   triggers = {
@@ -736,18 +736,18 @@ resource "null_resource" "apply_aws_ccm" {
   }
 }
 
-# Route 53 ALIAS record (009-route53-domain) — demo.vijote.dev -> the CCM-created ALB.
+# Cloudflare CNAME record (009-2-cloudflare-dns-record) — demo.vijote.dev -> the CCM-created ALB.
 # The ALB is out of Terraform state (CCM-created), so the record is created via SSM on
-# the control plane AFTER the CCM has produced the ALB. The control plane uses the node
-# instance profile, which carries the route53:* actions (node_route53 policy in
-# module.cluster_plumbing) — hence the module dependency. Idempotent (UPSERT).
-resource "null_resource" "apply_route53_record" {
+# the control plane AFTER the CCM has produced the ALB. 009-2: vijote.dev is authoritative
+# at Cloudflare (not Route 53), so the record is a CNAME created via the Cloudflare API;
+# the token is read from SSM on the control plane (node_ssm_parameters covers the path).
+# Idempotent (GET then PUT/POST).
+resource "null_resource" "apply_cloudflare_record" {
   depends_on = [null_resource.apply_aws_ccm, module.cluster_plumbing]
 
   triggers = {
     domain      = var.ingress_host
     instance_id = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
-    route53_ref = "route53-wildcard+typo-fix+alias-health+no-setid" # 009-1: node_route53 wildcard; 009-1b: CLI typo fix; 009-1c: required EvaluateTargetHealth; 009-1d: drop SetIdentifier (invalid on a simple ALIAS without a routing policy) (command string is not in null_resource state)
   }
 
   provisioner "local-exec" {
@@ -789,10 +789,10 @@ resource "null_resource" "apply_route53_record" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"echo '${base64encode(file("${path.module}/scripts/create-route53-record.sh"))}' | base64 -d | bash\"
+          \"echo '${base64encode(file("${path.module}/scripts/create-cloudflare-record.sh"))}' | base64 -d | bash\"
         ]" \
         --timeout-seconds 600 \
-        --comment "Create Route53 ALIAS record for demo.vijote.dev (009)" \
+        --comment "Create Cloudflare CNAME record for demo.vijote.dev (009-2)" \
         --query 'Command.CommandId' --output text)
       for i in $(seq 1 60); do
         STATUS=$(aws ssm get-command-invocation \
@@ -800,16 +800,16 @@ resource "null_resource" "apply_route53_record" {
           --command-id "$${CMD_ID}" \
           --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
         if [ "$${STATUS}" = "Success" ]; then
-          echo "Route 53 ALIAS record created successfully"
+          echo "Cloudflare CNAME record created successfully"
           exit 0
         fi
         if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
-          echo "Route 53 record creation failed with status $${STATUS}" >&2
+          echo "Cloudflare CNAME record creation failed with status $${STATUS}" >&2
           exit 1
         fi
         sleep 10
       done
-      echo "Route 53 record creation timed out waiting for invocation" >&2
+      echo "Cloudflare CNAME record creation timed out waiting for invocation" >&2
       exit 1
     EOT
   }
