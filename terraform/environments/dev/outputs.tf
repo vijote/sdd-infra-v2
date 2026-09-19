@@ -42,3 +42,13 @@ output "worker_instance_ids" {
   value       = module.worker_nodes.worker_instance_ids
   description = "Worker EC2 instance IDs (consumed by 003-3 verification AC-003)"
 }
+
+output "ecr_frontend_repository_url" {
+  value       = module.ecr.repository_urls["sdd-k8s-platform/frontend"]
+  description = "ECR URL for the frontend image (consumed by the frontend app repo pipeline + spec 011 pull secret)"
+}
+
+output "ecr_backend_repository_url" {
+  value       = module.ecr.repository_urls["sdd-k8s-platform/backend"]
+  description = "ECR URL for the backend image (consumed by the backend app repo pipeline + spec 011 pull secret)"
+}

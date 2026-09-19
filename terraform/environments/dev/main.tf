@@ -73,6 +73,18 @@ module "worker_nodes" {
   }
 }
 
+# ECR repositories (010-ecr-repositories) — registry for the frontend/backend app images.
+# Leaf module: no cluster dependency, nothing depends on it. Push role lives in the app
+# repos; the in-cluster pull secret is spec 011.
+module "ecr" {
+  source = "../../modules/ecr"
+
+  repository_names = [
+    "sdd-k8s-platform/frontend",
+    "sdd-k8s-platform/backend",
+  ]
+}
+
 # Flannel CNI — applied on the control plane via SSM Run Command (P7: version-controlled, re-runnable).
 # The local-exec runs on the CI runner (which has the assumed-role AWS credentials); it only issues the
 # SSM send-command. The actual `kubectl apply` runs on the control plane instance.
