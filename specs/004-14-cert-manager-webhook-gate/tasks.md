@@ -10,7 +10,7 @@
 
 ## Stage 2: Verification (CI / user-managed — per constitution P5/P6, agent does NOT run)
 
-- [ ] T002 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY `null_resource.apply_cert_manager` replacement (trigger change); zero changes to other resources
-- [ ] T003 [Stage 2: Verify] AC-003: controller + webhook + cainjector pods Ready (via SSM: `kubectl wait --for=condition=Ready pod -l app=cert-manager -n cert-manager --timeout=300s` + `-webhook` + `-cainjector`)
-- [ ] T004 [Stage 2: Verify] AC-004/AC-005: both ClusterIssuers present (`kubectl get clusterissuer selfsigned letsencrypt-prod -o name | wc -l` → `2`) AND both report `READY: True` (`kubectl get clusterissuer selfsigned letsencrypt-prod -o jsonpath='{range .items[*]}{.metadata.name}={.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}'`) (via SSM)
-- [ ] T005 [Stage 2: Verify] AC-006: the `apply_cert_manager` SSM invocation `Status == Success` with no webhook `connection refused` in StdErr (via SSM: `aws ssm get-command-invocation --command-id <CID> --instance-id <IID> --query 'CommandInvocation.Status' --output text`)
+- [x] T002 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY `null_resource.apply_cert_manager` replacement (trigger change); zero changes to other resources
+- [x] T003 [Stage 2: Verify] AC-003: controller + webhook + cainjector pods Ready (via SSM: `kubectl wait --for=condition=Ready pod -l app=cert-manager -n cert-manager --timeout=300s` + `-webhook` + `-cainjector`)
+- [x] T004 [Stage 2: Verify] AC-004/AC-005: both ClusterIssuers present (`kubectl get clusterissuer selfsigned letsencrypt-prod -o name | wc -l` → `2`) AND both report `READY: True` (`kubectl get clusterissuer selfsigned letsencrypt-prod -o jsonpath='{range .items[*]}{.metadata.name}={.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}'`) (via SSM)
+- [x] T005 [Stage 2: Verify] AC-006: the `apply_cert_manager` SSM invocation `Status == Success` with no webhook `connection refused` in StdErr (via SSM: `aws ssm get-command-invocation --command-id <CID> --instance-id <IID> --query 'CommandInvocation.Status' --output text`)

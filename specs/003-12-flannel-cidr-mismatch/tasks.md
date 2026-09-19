@@ -12,11 +12,11 @@
 
 ## Stage 2: Verification (CI-only)
 
-- [ ] T002 [Stage 2: Static] AC-001: `terraform fmt -check -recursive && terraform validate` (Depends on T001)
-- [ ] T003 [Stage 2: Plan] AC-002: `terraform plan -detailed-exitcode` exits 0 (Depends on T001)
-- [ ] T004 [Stage 2: E2E] AC-003: Flannel `net-conf.json` Network CIDR is `192.168.0.0/16` (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-flannel get cm kube-flannel-cfg -o jsonpath={.data}` contains `192.168.0.0/16`) (Depends on T001)
-- [ ] T005 [Stage 2: E2E] AC-004: Flannel daemonset fully rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-flannel rollout status ds/kube-flannel-ds --timeout=300s`) (Depends on T001)
-- [ ] T006 [Stage 2: E2E] AC-005: CoreDNS pods Ready — proves pods get pod IPs, closing the gap 003-11 missed (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-system wait --for=condition=Ready pod -l k8s-app=kube-dns --timeout=300s`) (Depends on T001)
+- [x] T002 [Stage 2: Static] AC-001: `terraform fmt -check -recursive && terraform validate` (Depends on T001)
+- [x] T003 [Stage 2: Plan] AC-002: `terraform plan -detailed-exitcode` exits 0 (Depends on T001)
+- [x] T004 [Stage 2: E2E] AC-003: Flannel `net-conf.json` Network CIDR is `192.168.0.0/16` (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-flannel get cm kube-flannel-cfg -o jsonpath={.data}` contains `192.168.0.0/16`) (Depends on T001)
+- [x] T005 [Stage 2: E2E] AC-004: Flannel daemonset fully rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-flannel rollout status ds/kube-flannel-ds --timeout=300s`) (Depends on T001)
+- [x] T006 [Stage 2: E2E] AC-005: CoreDNS pods Ready — proves pods get pod IPs, closing the gap 003-11 missed (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl -n kube-system wait --for=condition=Ready pod -l k8s-app=kube-dns --timeout=300s`) (Depends on T001)
 
 ---
 

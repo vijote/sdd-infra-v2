@@ -21,14 +21,14 @@
 
 ## Stage 4: Verification (CI-only)
 
-- [ ] T005 [Stage 4: Static] AC-001: `terraform fmt -check -recursive && terraform validate`
-- [ ] T006 [Stage 4: Static] AC-002: `grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/control-plane/bootstrap.sh`
-- [ ] T007 [Stage 4: Static] AC-003: `grep -qF 'BOOTSTRAP_ID}" = "$${INSTANCE_ID}' terraform/environments/dev/main.tf`
-- [ ] T008 [Stage 4: Static] AC-004: `grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/worker-nodes/bootstrap.sh`
-- [ ] T009 [Stage 4: Static] AC-005: `grep -qF 'replace(file("${path.module}/bootstrap.sh")' terraform/modules/worker-nodes/main.tf`
-- [ ] T010 [Stage 4: Plan] AC-006: `terraform plan -detailed-exitcode` exits 0
-- [ ] T011 [Stage 4: E2E] AC-007: Flannel daemonset rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`)
-- [ ] T012 [Stage 4: E2E] AC-008: All 3 nodes Ready (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes --no-headers | grep -c ' Ready'` returns `3`)
+- [x] T005 [Stage 4: Static] AC-001: `terraform fmt -check -recursive && terraform validate`
+- [x] T006 [Stage 4: Static] AC-002: `grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/control-plane/bootstrap.sh`
+- [x] T007 [Stage 4: Static] AC-003: `grep -qF 'BOOTSTRAP_ID}" = "$${INSTANCE_ID}' terraform/environments/dev/main.tf`
+- [x] T008 [Stage 4: Static] AC-004: `grep -qF 'kubeadm-bootstrap-instance-id' terraform/modules/worker-nodes/bootstrap.sh`
+- [x] T009 [Stage 4: Static] AC-005: `grep -qF 'replace(file("${path.module}/bootstrap.sh")' terraform/modules/worker-nodes/main.tf`
+- [x] T010 [Stage 4: Plan] AC-006: `terraform plan -detailed-exitcode` exits 0
+- [x] T011 [Stage 4: E2E] AC-007: Flannel daemonset rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`)
+- [x] T012 [Stage 4: E2E] AC-008: All 3 nodes Ready (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get nodes --no-headers | grep -c ' Ready'` returns `3`)
 
 ---
 

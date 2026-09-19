@@ -11,10 +11,10 @@
 
 ## Stage 2: Verification (CI / user-managed, per P5/P6)
 
-- [ ] T003 [Stage 2: Verify] Static: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` — plan must show only the `null_resource.apply_app_backend` replacement (trigger change), zero changes to other resources (AC-001, AC-002) (Depends on: T002)
-- [ ] T004 [Stage 2: Verify] SSM: `kubectl rollout status deployment/app-backend -n sdd-apps --timeout=300s` → 2/2 Ready, 0 restarts (AC-003) (Depends on: T003)
-- [ ] T005 [Stage 2: Verify] SSM: Service `app-backend` port 80 → targetPort 80 (AC-004) (Depends on: T004)
-- [ ] T006 [Stage 2: Verify] SSM: HTTP 200 via the Service from a busybox pod (`kubectl run http-test ... -- wget -qO- http://app-backend.sdd-apps.svc.cluster.local/`) (AC-005) (Depends on: T005)
+- [x] T003 [Stage 2: Verify] Static: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` — plan must show only the `null_resource.apply_app_backend` replacement (trigger change), zero changes to other resources (AC-001, AC-002) (Depends on: T002)
+- [x] T004 [Stage 2: Verify] SSM: `kubectl rollout status deployment/app-backend -n sdd-apps --timeout=300s` → 2/2 Ready, 0 restarts (AC-003) (Depends on: T003)
+- [x] T005 [Stage 2: Verify] SSM: Service `app-backend` port 80 → targetPort 80 (AC-004) (Depends on: T004)
+- [x] T006 [Stage 2: Verify] SSM: HTTP 200 via the Service from a busybox pod (`kubectl run http-test ... -- wget -qO- http://app-backend.sdd-apps.svc.cluster.local/`) (AC-005) (Depends on: T005)
 
 ## Dependencies
 

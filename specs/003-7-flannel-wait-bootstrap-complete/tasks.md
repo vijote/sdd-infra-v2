@@ -17,12 +17,12 @@
 
 ## Stage 2: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T003 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001, T002)
-- [ ] T004 [Stage 2: Verify] AC-002: Flannel provisioner waits for bootstrap-complete signal (`grep -q 'kubeadm-join-command' terraform/environments/dev/main.tf`) (Depends on T003)
-- [ ] T005 [Stage 2: Verify] AC-003: Flannel provisioner deletes stale parameter before polling (`grep -q 'delete-parameter' terraform/environments/dev/main.tf`) (Depends on T004)
-- [ ] T006 [Stage 2: Verify] AC-004: Worker bootstrap polls for join command (`grep -q 'seq 1 60' terraform/modules/worker-nodes/bootstrap.sh`) (Depends on T005)
-- [ ] T007 [Stage 2: Verify] AC-005: Terraform plan generates expected resource delta without errors (`terraform plan -detailed-exitcode`) (Depends on T006)
-- [ ] T008 [Stage 2: Verify] AC-006: Flannel CNI daemonset rolled out on the cluster (SSM Run Command on control plane: `kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`) (Depends on T007)
+- [x] T003 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001, T002)
+- [x] T004 [Stage 2: Verify] AC-002: Flannel provisioner waits for bootstrap-complete signal (`grep -q 'kubeadm-join-command' terraform/environments/dev/main.tf`) (Depends on T003)
+- [x] T005 [Stage 2: Verify] AC-003: Flannel provisioner deletes stale parameter before polling (`grep -q 'delete-parameter' terraform/environments/dev/main.tf`) (Depends on T004)
+- [x] T006 [Stage 2: Verify] AC-004: Worker bootstrap polls for join command (`grep -q 'seq 1 60' terraform/modules/worker-nodes/bootstrap.sh`) (Depends on T005)
+- [x] T007 [Stage 2: Verify] AC-005: Terraform plan generates expected resource delta without errors (`terraform plan -detailed-exitcode`) (Depends on T006)
+- [x] T008 [Stage 2: Verify] AC-006: Flannel CNI daemonset rolled out on the cluster (SSM Run Command on control plane: `kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`) (Depends on T007)
 
 ---
 

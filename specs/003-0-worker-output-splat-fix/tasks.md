@@ -14,11 +14,11 @@
 
 ## Stage 2: Verification (CI-only — executed in GitHub Actions, never locally)
 
-- [ ] T002 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001)
-- [ ] T003 [Stage 2: Verify] AC-002: Broken list splat removed (`! grep -q 'aws_instance.worker\[\*\].id' terraform/modules/worker-nodes/outputs.tf`) (Depends on T002)
-- [ ] T004 [Stage 2: Verify] AC-003: Fixed `for` expression present (`grep -q 'for _, inst in aws_instance.worker : inst.id' terraform/modules/worker-nodes/outputs.tf`) (Depends on T003)
-- [ ] T005 [Stage 2: Verify] AC-004: Terraform plan generates expected resource delta without errors (`terraform plan -detailed-exitcode`) (Depends on T004)
-- [ ] T006 [Stage 2: Verify] AC-005: `worker_instance_ids` output resolves to 2 instance IDs (`terraform output -raw worker_instance_ids | tr -d '[]"' | tr ',' ' ' | wc -w | grep -q '^2$'`) (Depends on T005)
+- [x] T002 [Stage 2: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T001)
+- [x] T003 [Stage 2: Verify] AC-002: Broken list splat removed (`! grep -q 'aws_instance.worker\[\*\].id' terraform/modules/worker-nodes/outputs.tf`) (Depends on T002)
+- [x] T004 [Stage 2: Verify] AC-003: Fixed `for` expression present (`grep -q 'for _, inst in aws_instance.worker : inst.id' terraform/modules/worker-nodes/outputs.tf`) (Depends on T003)
+- [x] T005 [Stage 2: Verify] AC-004: Terraform plan generates expected resource delta without errors (`terraform plan -detailed-exitcode`) (Depends on T004)
+- [x] T006 [Stage 2: Verify] AC-005: `worker_instance_ids` output resolves to 2 instance IDs (`terraform output -raw worker_instance_ids | tr -d '[]"' | tr ',' ' ' | wc -w | grep -q '^2$'`) (Depends on T005)
 
 ---
 

@@ -12,11 +12,11 @@
 
 ## Stage 2: Verification (CI / user-managed, per P5/P6)
 
-- [ ] T004 [Stage 2: Verify] Static: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` — plan must show only the new `variable` + `null_resource` (1 add), zero changes to existing resources (AC-001, AC-002) (Depends on: T003)
-- [ ] T005 [Stage 2: Verify] SSM: `kubectl rollout status deployment/app-frontend -n sdd-apps --timeout=300s` → 2/2 ready (AC-003) (Depends on: T004)
-- [ ] T006 [Stage 2: Verify] SSM: Ingress `app-ingress` host = `app.local` + both path rules `/api` and `/` present (AC-004) (Depends on: T005)
-- [ ] T007 [Stage 2: Verify] SSM: Ingress has an external ADDRESS (LoadBalancer IP, not `<none>`) (AC-005) (Depends on: T006)
-- [ ] T008 [Stage 2: Verify] SSM: path routing — busybox pod `wget --header="Host: app.local"` against `ingress-nginx-controller.ingress-nginx.svc` on `/` and `/api/` both succeed (AC-006) (Depends on: T007)
+- [x] T004 [Stage 2: Verify] Static: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` — plan must show only the new `variable` + `null_resource` (1 add), zero changes to existing resources (AC-001, AC-002) (Depends on: T003)
+- [x] T005 [Stage 2: Verify] SSM: `kubectl rollout status deployment/app-frontend -n sdd-apps --timeout=300s` → 2/2 ready (AC-003) (Depends on: T004)
+- [x] T006 [Stage 2: Verify] SSM: Ingress `app-ingress` host = `app.local` + both path rules `/api` and `/` present (AC-004) (Depends on: T005)
+- [x] T007 [Stage 2: Verify] SSM: Ingress has an external ADDRESS (LoadBalancer IP, not `<none>`) (AC-005) (Depends on: T006)
+- [x] T008 [Stage 2: Verify] SSM: path routing — busybox pod `wget --header="Host: app.local"` against `ingress-nginx-controller.ingress-nginx.svc` on `/` and `/api/` both succeed (AC-006) (Depends on: T007)
 
 ## Dependencies
 

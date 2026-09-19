@@ -25,13 +25,13 @@
 
 ## Stage 3: Verification (AC-001–AC-003 CI-only; AC-004–AC-007 user-managed SSM — NOT added to terraform-apply.yml)
 
-- [ ] T008 [Stage 3: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T007)
-- [ ] T009 [Stage 3: Verify] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`) (Depends on T008)
-- [ ] T010 [Stage 3: Verify] AC-003: 2 worker EC2 instances running (`aws ec2 describe-instances --instance-ids $(terraform output -raw worker_instance_ids | tr -d '[]"' | tr ',' ' ') --query 'Reservations[].Instances[].State.Name' --output text | grep -c 'running' | grep -q '^2$'`) (Depends on T009)
-- [ ] T011 [Stage 3: Verify] AC-004: 3 nodes Ready via SSM Run Command on control plane (`kubectl get nodes --no-headers | grep -c ' Ready' | grep -q '^3$'`) (Depends on T010)
-- [ ] T012 [Stage 3: Verify] AC-005: Flannel CNI daemonset rolled out via SSM Run Command on control plane (`kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`) (Depends on T011)
-- [ ] T013 [Stage 3: Verify] AC-006: CoreDNS Ready via SSM Run Command on control plane (`kubectl rollout status deployment/coredns -n kube-system --timeout=300s`) (Depends on T012)
-- [ ] T014 [Stage 3: Verify] AC-007: all pods Running/Completed via SSM Run Command on control plane (`kubectl get pods -A --no-headers | grep -vE 'Running|Completed' | wc -l | grep -q '^0$'`) (Depends on T013)
+- [x] T008 [Stage 3: Verify] AC-001: Terraform syntax and formatting valid (`terraform fmt -check -recursive && terraform validate`) (Depends on T007)
+- [x] T009 [Stage 3: Verify] AC-002: Terraform plan generates expected resources (`terraform plan -detailed-exitcode`) (Depends on T008)
+- [x] T010 [Stage 3: Verify] AC-003: 2 worker EC2 instances running (`aws ec2 describe-instances --instance-ids $(terraform output -raw worker_instance_ids | tr -d '[]"' | tr ',' ' ') --query 'Reservations[].Instances[].State.Name' --output text | grep -c 'running' | grep -q '^2$'`) (Depends on T009)
+- [x] T011 [Stage 3: Verify] AC-004: 3 nodes Ready via SSM Run Command on control plane (`kubectl get nodes --no-headers | grep -c ' Ready' | grep -q '^3$'`) (Depends on T010)
+- [x] T012 [Stage 3: Verify] AC-005: Flannel CNI daemonset rolled out via SSM Run Command on control plane (`kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`) (Depends on T011)
+- [x] T013 [Stage 3: Verify] AC-006: CoreDNS Ready via SSM Run Command on control plane (`kubectl rollout status deployment/coredns -n kube-system --timeout=300s`) (Depends on T012)
+- [x] T014 [Stage 3: Verify] AC-007: all pods Running/Completed via SSM Run Command on control plane (`kubectl get pods -A --no-headers | grep -vE 'Running|Completed' | wc -l | grep -q '^0$'`) (Depends on T013)
 
 ---
 

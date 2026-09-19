@@ -14,14 +14,14 @@
 
 ## Stage 2: Verification (CI-only)
 
-- [ ] T004 [Stage 2: Static] AC-001: `terraform fmt -check -recursive && terraform validate` (Depends on T003)
-- [ ] T005 [Stage 2: Plan] AC-002: `terraform plan -detailed-exitcode` exits 0 (Depends on T003)
-- [ ] T006 [Stage 2: Static] AC-008: `terraform state list | grep -q 'aws_iam_role_policy.node_ebs_csi'` (Depends on T001)
-- [ ] T007 [Stage 2: E2E] AC-003: EBS CSI controller + node plugin ready (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=Ready pod -l app=ebs-csi-controller -n kube-system --timeout=300s && KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=Ready pod -l app=ebs-csi-node -n kube-system --timeout=300s`) (Depends on T003)
-- [ ] T008 [Stage 2: E2E] AC-004: `ebs-gp3` StorageClass provisioner is `ebs.csi.aws.com` (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get storageclass ebs-gp3 -o jsonpath={.provisioner}` returns `ebs.csi.aws.com`) (Depends on T003)
-- [ ] T009 [Stage 2: E2E] AC-005: ingress controller rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s`) (Depends on T003)
-- [ ] T010 [Stage 2: E2E] AC-006: ingress LB has an external hostname (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath={.status.loadBalancer.ingress[0].hostname}` matches `\.elb\.`) (Depends on T003)
-- [ ] T011 [Stage 2: E2E] AC-007: `sdd-apps` namespace exists (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get namespace sdd-apps -o jsonpath={.metadata.name}` returns `sdd-apps`) (Depends on T003)
+- [x] T004 [Stage 2: Static] AC-001: `terraform fmt -check -recursive && terraform validate` (Depends on T003)
+- [x] T005 [Stage 2: Plan] AC-002: `terraform plan -detailed-exitcode` exits 0 (Depends on T003)
+- [x] T006 [Stage 2: Static] AC-008: `terraform state list | grep -q 'aws_iam_role_policy.node_ebs_csi'` (Depends on T001)
+- [x] T007 [Stage 2: E2E] AC-003: EBS CSI controller + node plugin ready (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=Ready pod -l app=ebs-csi-controller -n kube-system --timeout=300s && KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=Ready pod -l app=ebs-csi-node -n kube-system --timeout=300s`) (Depends on T003)
+- [x] T008 [Stage 2: E2E] AC-004: `ebs-gp3` StorageClass provisioner is `ebs.csi.aws.com` (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get storageclass ebs-gp3 -o jsonpath={.provisioner}` returns `ebs.csi.aws.com`) (Depends on T003)
+- [x] T009 [Stage 2: E2E] AC-005: ingress controller rolled out (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s`) (Depends on T003)
+- [x] T010 [Stage 2: E2E] AC-006: ingress LB has an external hostname (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath={.status.loadBalancer.ingress[0].hostname}` matches `\.elb\.`) (Depends on T003)
+- [x] T011 [Stage 2: E2E] AC-007: `sdd-apps` namespace exists (SSM Run Command on control plane: `KUBECONFIG=/etc/kubernetes/admin.conf kubectl get namespace sdd-apps -o jsonpath={.metadata.name}` returns `sdd-apps`) (Depends on T003)
 
 ---
 
