@@ -10,8 +10,8 @@
 
 ## Stage 2: Verification (CI / user-managed — per constitution P5/P6, agent does NOT run)
 
-- [ ] T002 [Stage 2: Verify] AC-001: `terraform fmt -check -recursive && terraform validate` — exit 0, no diff (Depends on T001)
-- [ ] T003 [Stage 2: Verify] AC-002: `terraform plan -detailed-exitcode` — exit 2; plan shows exactly 1 `null_resource.apply_app_frontend_ingress` re-run, zero other changes (Depends on T001)
-- [ ] T004 [Stage 2: Verify] AC-003: `terraform plan -no-color | grep -c 'rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s'` returns `1` (gate present in the rendered command) (Depends on T001)
-- [ ] T005 [Stage 2: Verify] AC-004/AC-005/AC-006: after the next `terraform-apply` run — `kubectl get ingress -n sdd-apps app-ingress` (host `app.local`) + jsonpath host/paths = `app.local/api/` + `kubectl rollout status deployment/app-frontend -n sdd-apps --timeout=300s` (Depends on T001)
-- [ ] T006 [Stage 2: Verify] AC-007: `kubectl get endpoints ingress-nginx-controller-admission -n ingress-nginx` — ENDPOINTS non-empty (`<controller-pod-ip>:8443`) (Depends on T001)
+- [x] T002 [Stage 2: Verify] AC-001: `terraform fmt -check -recursive && terraform validate` — exit 0, no diff (Depends on T001)
+- [x] T003 [Stage 2: Verify] AC-002: `terraform plan -detailed-exitcode` — exit 2; plan shows exactly 1 `null_resource.apply_app_frontend_ingress` re-run, zero other changes (Depends on T001)
+- [x] T004 [Stage 2: Verify] AC-003: `terraform plan -no-color | grep -c 'rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s'` returns `1` (gate present in the rendered command) (Depends on T001)
+- [x] T005 [Stage 2: Verify] AC-004/AC-005/AC-006: after the next `terraform-apply` run — `kubectl get ingress -n sdd-apps app-ingress` (host `app.local`) + jsonpath host/paths = `app.local/api/` + `kubectl rollout status deployment/app-frontend -n sdd-apps --timeout=300s` (Depends on T001)
+- [x] T006 [Stage 2: Verify] AC-007: `kubectl get endpoints ingress-nginx-controller-admission -n ingress-nginx` — ENDPOINTS non-empty (`<controller-pod-ip>:8443`) (Depends on T001)

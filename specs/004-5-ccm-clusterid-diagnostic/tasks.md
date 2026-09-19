@@ -11,7 +11,7 @@
 
 ## Stage 2: Verification (CI / user-managed — per constitution P5/P6, agent does NOT run)
 
-- [ ] T003 [Stage 2: Verify] AC-001: `terraform fmt -check -recursive && terraform validate` — exit 0, no diff (Depends on T001, T002)
-- [ ] T004 [Stage 2: Verify] AC-002: `terraform plan -detailed-exitcode` — exit 2; plan shows exactly 1 `null_resource.apply_aws_ccm` re-run, zero other changes (Depends on T001, T002)
-- [ ] T005 [Stage 2: Verify] AC-003: `grep -c '\-\-v=4' terraform/environments/dev/manifests/aws-ccm.yaml` returns `1` (Depends on T001)
-- [ ] T006 [Stage 2: Verify] AC-004/AC-005: after the next `terraform-apply` run — SSM invocation output contains the CCM `--v=4` trace (region load, cloudprovider build, DescribeInstances/DescribeSubnets/DescribeVpcs calls or AccessDenied) and the root cause is identified (failing AWS action, or wrong VPC queried) → scope 004-6 (Depends on T001, T002)
+- [x] T003 [Stage 2: Verify] AC-001: `terraform fmt -check -recursive && terraform validate` — exit 0, no diff (Depends on T001, T002)
+- [x] T004 [Stage 2: Verify] AC-002: `terraform plan -detailed-exitcode` — exit 2; plan shows exactly 1 `null_resource.apply_aws_ccm` re-run, zero other changes (Depends on T001, T002)
+- [x] T005 [Stage 2: Verify] AC-003: `grep -c '\-\-v=4' terraform/environments/dev/manifests/aws-ccm.yaml` returns `1` (Depends on T001)
+- [x] T006 [Stage 2: Verify] AC-004/AC-005: after the next `terraform-apply` run — SSM invocation output contains the CCM `--v=4` trace (region load, cloudprovider build, DescribeInstances/DescribeSubnets/DescribeVpcs calls or AccessDenied) and the root cause is identified (failing AWS action, or wrong VPC queried) → scope 004-6 (Depends on T001, T002)

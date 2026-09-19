@@ -12,9 +12,9 @@
 
 ## Stage 2: Verification (CI / user-managed, per P5/P6)
 
-- [ ] T002 [Stage 2: Static] Terraform syntax/format/plan valid — `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` (AC-001, AC-002) (Depends on T001)
-- [ ] T003 [Stage 2: SSM] EBS CSI `apply -k ...?ref=v1.28.0` exits `Success` (no CSIDriver decode error) (AC-003) (Depends on T001)
-- [ ] T004 [Stage 2: SSM] CSIDriver registered + EBS CSI ready — SSM `kubectl get csidriver ebs.csi.aws.com && kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=300s && kubectl rollout status daemonset/ebs-csi-node -n kube-system --timeout=300s` (AC-004, AC-005) (Depends on T001)
+- [x] T002 [Stage 2: Static] Terraform syntax/format/plan valid — `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` (AC-001, AC-002) (Depends on T001)
+- [x] T003 [Stage 2: SSM] EBS CSI `apply -k ...?ref=v1.28.0` exits `Success` (no CSIDriver decode error) (AC-003) (Depends on T001)
+- [x] T004 [Stage 2: SSM] CSIDriver registered + EBS CSI ready — SSM `kubectl get csidriver ebs.csi.aws.com && kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=300s && kubectl rollout status daemonset/ebs-csi-node -n kube-system --timeout=300s` (AC-004, AC-005) (Depends on T001)
 
 ## Dependencies
 

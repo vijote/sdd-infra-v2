@@ -10,7 +10,7 @@
 
 ## Stage 2: Verification (CI / user-managed — per constitution P5/P6, agent does NOT run)
 
-- [ ] T002 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY `null_resource.apply_cert_manager` replacement (trigger change); zero changes to other resources
-- [ ] T003 [Stage 2: Verify] AC-003: both ClusterIssuers present (via SSM: `kubectl get clusterissuer selfsigned letsencrypt-prod -o name | wc -l` → `2`)
-- [ ] T004 [Stage 2: Verify] AC-004/AC-006: both ClusterIssuers report `READY: True` (via SSM: `kubectl get clusterissuer selfsigned letsencrypt-prod -o jsonpath='{range .items[*]}{.metadata.name}={.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}'`) AND the webhook is callable (via SSM: `kubectl get clusterissuers >/dev/null && echo "webhook OK"` → `webhook OK`)
-- [ ] T005 [Stage 2: Verify] AC-005: the `apply_cert_manager` SSM invocation `Status == Success` with no webhook `connection refused` in StdErr (via SSM: `aws ssm get-command-invocation --command-id <CID> --instance-id <IID> --query 'CommandInvocation.Status' --output text`)
+- [x] T002 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY `null_resource.apply_cert_manager` replacement (trigger change); zero changes to other resources
+- [x] T003 [Stage 2: Verify] AC-003: both ClusterIssuers present (via SSM: `kubectl get clusterissuer selfsigned letsencrypt-prod -o name | wc -l` → `2`)
+- [x] T004 [Stage 2: Verify] AC-004/AC-006: both ClusterIssuers report `READY: True` (via SSM: `kubectl get clusterissuer selfsigned letsencrypt-prod -o jsonpath='{range .items[*]}{.metadata.name}={.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}'`) AND the webhook is callable (via SSM: `kubectl get clusterissuers >/dev/null && echo "webhook OK"` → `webhook OK`)
+- [x] T005 [Stage 2: Verify] AC-005: the `apply_cert_manager` SSM invocation `Status == Success` with no webhook `connection refused` in StdErr (via SSM: `aws ssm get-command-invocation --command-id <CID> --instance-id <IID> --query 'CommandInvocation.Status' --output text`)

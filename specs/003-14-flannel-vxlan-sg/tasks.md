@@ -10,10 +10,10 @@
 
 ## Stage 2: Verification (CI / user-managed, per P5/P6)
 
-- [ ] T002 [Stage 2: Verify] Static: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` — plan must show in-place update of the two SGs only, zero replacements (AC-001, AC-002) (Depends on: T001)
-- [ ] T003 [Stage 2: Verify] SSM: both SGs expose 8472/udp + 4240/tcp from vpc_cidr (AC-003) (Depends on: T002)
-- [ ] T004 [Stage 2: Verify] SSM: cross-node pod→pod DNS — worker pod `nslookup kubernetes.default` succeeds (AC-004) (Depends on: T003)
-- [ ] T005 [Stage 2: Verify] SSM: 005 PVC `mysql-data-mysql-0` phase `Bound` (AC-005) (Depends on: T004)
+- [x] T002 [Stage 2: Verify] Static: `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` — plan must show in-place update of the two SGs only, zero replacements (AC-001, AC-002) (Depends on: T001)
+- [x] T003 [Stage 2: Verify] SSM: both SGs expose 8472/udp + 4240/tcp from vpc_cidr (AC-003) (Depends on: T002)
+- [x] T004 [Stage 2: Verify] SSM: cross-node pod→pod DNS — worker pod `nslookup kubernetes.default` succeeds (AC-004) (Depends on: T003)
+- [x] T005 [Stage 2: Verify] SSM: 005 PVC `mysql-data-mysql-0` phase `Bound` (AC-005) (Depends on: T004)
 
 ## Dependencies
 

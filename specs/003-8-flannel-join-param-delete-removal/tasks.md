@@ -12,11 +12,11 @@
 
 ## Stage 2: Verification (CI-only)
 
-- [ ] T002 [Stage 2: Static] AC-001: `terraform fmt -check -recursive && terraform validate`
-- [ ] T003 [Stage 2: Static] AC-002: `! grep -qF 'delete-parameter' terraform/environments/dev/main.tf`
-- [ ] T004 [Stage 2: Static] AC-003: `grep -qF 'Control plane bootstrap complete' terraform/environments/dev/main.tf`
-- [ ] T005 [Stage 2: Plan] AC-004: `terraform plan -detailed-exitcode` exits 0
-- [ ] T006 [Stage 2: E2E] AC-005: Flannel daemonset rolled out (SSM Run Command on control plane: `kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`). One-time: recreate the 003-7 workers so they join (their bootstrap had timed out on the deleted parameter).
+- [x] T002 [Stage 2: Static] AC-001: `terraform fmt -check -recursive && terraform validate`
+- [x] T003 [Stage 2: Static] AC-002: `! grep -qF 'delete-parameter' terraform/environments/dev/main.tf`
+- [x] T004 [Stage 2: Static] AC-003: `grep -qF 'Control plane bootstrap complete' terraform/environments/dev/main.tf`
+- [x] T005 [Stage 2: Plan] AC-004: `terraform plan -detailed-exitcode` exits 0
+- [x] T006 [Stage 2: E2E] AC-005: Flannel daemonset rolled out (SSM Run Command on control plane: `kubectl rollout status daemonset/kube-flannel-ds -n kube-flannel --timeout=300s`). One-time: recreate the 003-7 workers so they join (their bootstrap had timed out on the deleted parameter).
 
 ---
 

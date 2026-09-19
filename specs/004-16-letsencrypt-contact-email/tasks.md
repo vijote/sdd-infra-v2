@@ -11,6 +11,6 @@
 
 ## Stage 2: Verification (CI / user-managed — per constitution P5/P6, agent does NOT run)
 
-- [ ] T003 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY `null_resource.apply_cert_manager` replacement (trigger change); zero changes to other resources
-- [ ] T004 [Stage 2: Verify] AC-003: `kubectl get clusterissuer letsencrypt-prod -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'` → `True` (ACME account registered under the real email; no `ErrRegisterACMEAccount`)
-- [ ] T005 [Stage 2: Verify] AC-004/AC-005: (1) `kubectl get certificate demo-vijote-dev -n sdd-apps -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'` → `True`, (2) `curl -sSf https://demo.vijote.dev/ -o /dev/null -w '%{http_code}\n'` → `200` AND `curl -sSf https://demo.vijote.dev/api -o /dev/null -w '%{http_code}\n'` → `200` (proves DNS + TLS + routing end-to-end; no nslookup per AGENTS.md)
+- [x] T003 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY `null_resource.apply_cert_manager` replacement (trigger change); zero changes to other resources
+- [x] T004 [Stage 2: Verify] AC-003: `kubectl get clusterissuer letsencrypt-prod -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'` → `True` (ACME account registered under the real email; no `ErrRegisterACMEAccount`)
+- [x] T005 [Stage 2: Verify] AC-004/AC-005: (1) `kubectl get certificate demo-vijote-dev -n sdd-apps -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}'` → `True`, (2) `curl -sSf https://demo.vijote.dev/ -o /dev/null -w '%{http_code}\n'` → `200` AND `curl -sSf https://demo.vijote.dev/api -o /dev/null -w '%{http_code}\n'` → `200` (proves DNS + TLS + routing end-to-end; no nslookup per AGENTS.md)

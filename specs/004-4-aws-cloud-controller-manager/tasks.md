@@ -12,7 +12,7 @@
 
 ## Stage 2: Verification (CI / user-managed — per constitution P5/P6, agent does NOT run)
 
-- [ ] T004 [Stage 2: Verify] Static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY: 1 new IAM policy + 1 new null_resource (zero changes to existing resources)
-- [ ] T005 [Stage 2: Verify] AC-001/AC-002: CCM rolled out + 1 pod Running (0 restarts)
-- [ ] T006 [Stage 2: Verify] AC-003/AC-004: `ingress-nginx-controller` EXTERNAL-IP = ELB DNS (not `<pending>`) + Ingress ADDRESS populated
-- [ ] T007 [Stage 2: Verify] AC-005: annotation shows the public subnet IDs (internet-facing ELB)
+- [x] T004 [Stage 2: Verify] Static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY: 1 new IAM policy + 1 new null_resource (zero changes to existing resources)
+- [x] T005 [Stage 2: Verify] AC-001/AC-002: CCM rolled out + 1 pod Running (0 restarts)
+- [x] T006 [Stage 2: Verify] AC-003/AC-004: `ingress-nginx-controller` EXTERNAL-IP = ELB DNS (not `<pending>`) + Ingress ADDRESS populated
+- [x] T007 [Stage 2: Verify] AC-005: annotation shows the public subnet IDs (internet-facing ELB)

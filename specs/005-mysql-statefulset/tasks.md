@@ -14,10 +14,10 @@
 
 ## Stage 2: Verification (CI / user-managed, per P5/P6)
 
-- [ ] T004 [Stage 2: Static] Terraform syntax/format/plan valid — `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` (AC-001, AC-002) (Depends on T003)
-- [ ] T005 [Stage 2: SSM] Secret `mysql-secret` exists with all 4 keys (AC-003) (Depends on T003)
-- [ ] T006 [Stage 2: SSM] PVC `mysql-data-mysql-0` phase `Bound` (AC-004) (Depends on T003)
-- [ ] T007 [Stage 2: SSM] StatefulSet ready + authenticated query — `kubectl rollout status statefulset/mysql -n sdd-apps --timeout=600s` then `kubectl exec -n sdd-apps mysql-0 -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1"'` (AC-005, AC-006) (Depends on T003)
+- [x] T004 [Stage 2: Static] Terraform syntax/format/plan valid — `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` (AC-001, AC-002) (Depends on T003)
+- [x] T005 [Stage 2: SSM] Secret `mysql-secret` exists with all 4 keys (AC-003) (Depends on T003)
+- [x] T006 [Stage 2: SSM] PVC `mysql-data-mysql-0` phase `Bound` (AC-004) (Depends on T003)
+- [x] T007 [Stage 2: SSM] StatefulSet ready + authenticated query — `kubectl rollout status statefulset/mysql -n sdd-apps --timeout=600s` then `kubectl exec -n sdd-apps mysql-0 -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1"'` (AC-005, AC-006) (Depends on T003)
 
 ## Dependencies
 

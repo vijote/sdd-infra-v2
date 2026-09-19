@@ -13,9 +13,9 @@
 
 ## Stage 2: Verification (CI / user-managed, per P5/P6)
 
-- [ ] T003 [Stage 2: Static] Terraform syntax/format/plan valid — `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` (AC-001, AC-002) (Depends on T002)
-- [ ] T004 [Stage 2: SSM] `git` installed on the control plane — SSM `git --version` → `^git version` (AC-003) (Depends on T002)
-- [ ] T005 [Stage 2: SSM] EBS CSI ready — SSM `kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=300s && kubectl rollout status daemonset/ebs-csi-node -n kube-system --timeout=300s` (AC-004, AC-005) (Depends on T002)
+- [x] T003 [Stage 2: Static] Terraform syntax/format/plan valid — `terraform fmt -check -recursive && terraform validate && terraform plan -detailed-exitcode` (AC-001, AC-002) (Depends on T002)
+- [x] T004 [Stage 2: SSM] `git` installed on the control plane — SSM `git --version` → `^git version` (AC-003) (Depends on T002)
+- [x] T005 [Stage 2: SSM] EBS CSI ready — SSM `kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=300s && kubectl rollout status daemonset/ebs-csi-node -n kube-system --timeout=300s` (AC-004, AC-005) (Depends on T002)
 
 ## Dependencies
 

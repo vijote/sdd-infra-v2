@@ -11,7 +11,7 @@
 
 ## Stage 2: Verification (CI / user-managed — per constitution P5/P6, agent does NOT run)
 
-- [ ] T003 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY 1 new null_resource (zero changes to existing resources)
-- [ ] T004 [Stage 2: Verify] AC-003: cert-manager controller + webhook + cainjector pods Ready in `cert-manager` namespace (via SSM: `kubectl wait --for=condition=Ready pod -l app=cert-manager -n cert-manager --timeout=300s` + `-webhook` + `-cainjector`)
-- [ ] T005 [Stage 2: Verify] AC-004/AC-005: `kubectl get clusterissuer selfsigned -o jsonpath={.metadata.name}` → `selfsigned` AND `kubectl get clusterissuer letsencrypt-prod -o jsonpath={.metadata.name}` → `letsencrypt-prod` (via SSM)
-- [ ] T006 [Stage 2: Verify] AC-006: `kubectl get crd certificates.cert-manager.io clusterissuers.cert-manager.io issuers.cert-manager.io -o name | wc -l` → `3` (via SSM)
+- [x] T003 [Stage 2: Verify] AC-001/AC-002 static: `terraform fmt -check -recursive` + `terraform validate` + `terraform plan -detailed-exitcode` — plan must show ONLY 1 new null_resource (zero changes to existing resources)
+- [x] T004 [Stage 2: Verify] AC-003: cert-manager controller + webhook + cainjector pods Ready in `cert-manager` namespace (via SSM: `kubectl wait --for=condition=Ready pod -l app=cert-manager -n cert-manager --timeout=300s` + `-webhook` + `-cainjector`)
+- [x] T005 [Stage 2: Verify] AC-004/AC-005: `kubectl get clusterissuer selfsigned -o jsonpath={.metadata.name}` → `selfsigned` AND `kubectl get clusterissuer letsencrypt-prod -o jsonpath={.metadata.name}` → `letsencrypt-prod` (via SSM)
+- [x] T006 [Stage 2: Verify] AC-006: `kubectl get crd certificates.cert-manager.io clusterissuers.cert-manager.io issuers.cert-manager.io -o name | wc -l` → `3` (via SSM)
