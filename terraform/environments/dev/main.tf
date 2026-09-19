@@ -592,6 +592,7 @@ resource "null_resource" "apply_ecr_pull_secret" {
   triggers = {
     ecr_repo_url = module.ecr.repository_urls["sdd-k8s-platform/frontend"] # 010
     instance_id  = module.control_plane.control_plane_instance_id          # 004-10: re-apply on cluster recreation
+    script_rev   = "014-guard-fix" # 014: force re-run with the fixed guard
   }
 
   provisioner "local-exec" {
