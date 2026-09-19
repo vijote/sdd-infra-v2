@@ -73,6 +73,18 @@ module "worker_nodes" {
   }
 }
 
+# ECR repositories (010-ecr-repositories) — registry for the frontend/backend app images.
+# Leaf module: no cluster dependency, nothing depends on it. Push role lives in the app
+# repos; the in-cluster pull secret is spec 011.
+module "ecr" {
+  source = "../../modules/ecr"
+
+  repository_names = [
+    "sdd-k8s-platform/frontend",
+    "sdd-k8s-platform/backend",
+  ]
+}
+
 # Flannel CNI — applied on the control plane via SSM Run Command (P7: version-controlled, re-runnable).
 # The local-exec runs on the CI runner (which has the assumed-role AWS credentials); it only issues the
 # SSM send-command. The actual `kubectl apply` runs on the control plane instance.
@@ -564,6 +576,85 @@ resource "null_resource" "apply_app_frontend_ingress" {
         sleep 10
       done
       echo "App frontend + ingress apply timed out waiting for invocation" >&2
+      exit 1
+    EOT
+  }
+}
+
+# ECR pull secret (011-ecr-pull-secret) — dockerconfigjson in sdd-apps so kubelet can
+# pull from ECR (kubelet does NOT use the node IAM role for image pulls). The script
+# mints a fresh ECR token on the control plane (node role has
+# AmazonEC2ContainerRegistryReadOnly -> ecr:GetAuthorizationToken). The ECR token is
+# valid ~12h: re-apply (or re-run the script) to refresh.
+resource "null_resource" "apply_ecr_pull_secret" {
+  depends_on = [null_resource.apply_app_infrastructure] # creates the sdd-apps namespace (004)
+
+  triggers = {
+    ecr_repo_url = module.ecr.repository_urls["sdd-k8s-platform/frontend"] # 010
+    instance_id  = module.control_plane.control_plane_instance_id          # 004-10: re-apply on cluster recreation
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      # Wait for the control plane's SSM agent to register (same as apply_app_backend).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID}" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion (003-11 per-run signal): the bootstrap-instance-id
+      # parameter must equal THIS control plane's instance ID.
+      for i in $(seq 1 60); do
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
+        exit 1
+      fi
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[
+          \"echo '${base64encode(replace(file("${path.module}/scripts/create-ecr-pull-secret.sh"), "%%ECR_REGISTRY%%", module.ecr.repository_urls["sdd-k8s-platform/frontend"]))}' | base64 -d | bash\"
+        ]" \
+        --timeout-seconds 600 \
+        --comment "Create ECR pull secret in sdd-apps (011)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 60); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "ECR pull secret created successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "ECR pull secret creation failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "ECR pull secret creation timed out waiting for invocation" >&2
       exit 1
     EOT
   }
