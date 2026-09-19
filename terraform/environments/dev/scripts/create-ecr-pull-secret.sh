@@ -6,8 +6,8 @@ set -euo pipefail
 
 REGISTRY="%%ECR_REGISTRY%%" # replaced by Terraform with the 010 ECR repository URL
 
-if [ -z "$REGISTRY" ] || [ "$REGISTRY" = "%%ECR_REGISTRY%%" ]; then
-  echo "ERROR: REGISTRY not substituted" >&2
+if [ -z "$REGISTRY" ]; then
+  echo "ERROR: REGISTRY is empty" >&2
   exit 1
 fi
 
