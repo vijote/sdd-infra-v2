@@ -257,7 +257,7 @@ resource "null_resource" "apply_cert_manager" {
   depends_on = [null_resource.apply_app_infrastructure]
 
   triggers = {
-    cert_manager_ref = "v1.19.4+webhook-gate+issuer-retry" # 004-13: v1.20+ CRDs need K8s 1.30+; 004-14: gate issuers on webhook rollout; 004-15: retry ClusterIssuer apply (webhook startup race)
+    cert_manager_ref = "v1.19.4+webhook-gate+issuer-retry+issuer-email" # 004-13: v1.20+ CRDs need K8s 1.30+; 004-14: gate issuers on webhook rollout; 004-15: retry ClusterIssuer apply (webhook startup race); 004-16: real ACME contact email (LE rejects example.com)
     instance_id      = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
