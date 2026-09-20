@@ -1,0 +1,31 @@
+## Stable Project Preferences
+- Before making edits, suggest creating a new spec using `/speckit-specify`. Do not make edits or push fixes on your own without direct user instruction.
+- Commit style: one-liner commit messages; group files by feature — files from the same spec or prompt go in the same commit.
+- Bug/finding handling: when a bug or gap is found during implementation or verification, fix it in a NEW follow-on spec with the NEXT sequential number (e.g., `003-4`, `003-5`), NOT by editing already-implemented specs to match code. Reserve `00x-0-*` strictly for bootstrap/prerequisite fixes.
+- CRITICAL: No testing/validation/verification in implementation — user handles all testing personally. Never add validation steps, echo statements, or CloudFormation connections in workflows.
+
+## Important Decisions
+- **IAM & Deploy Roles**: `github-actions-assume-role` uses wildcard `iam:*` (`TerraformIamAccess`). Node/CCM policies use `elasticloadbalancing:*` for ELB lifecycle. Infrastructure deploy role var is `AWS_TERRAFORM_ROLE`; state bucket var is `TF_VAR_state_bucket_name`. PowerUserAccess excludes `iam:*`.
+- **Secrets Architecture**: SSM Parameter Store `SecureString` under `/sdd-k8s-platform/secrets/` is the single source of truth (created MANUALLY one-time). Terraform reads via `data "aws_ssm_parameter"`. Manifests use `%%TOKEN%%` placeholders; Terraform injects `base64encode(param.value)` into K8s Secrets and applies base64-encoded manifests via SSM.
+- **App & Infrastructure Architecture**: Self-managed K8s (v1.28.0 via `kubeadm`) on AWS EC2 (AL2023). 2-replica deployments in `sdd-apps` namespace. `ingress-nginx` routes `/api` -> backend and `/` -> frontend. ECR build/push deferred until real app repos exist.
+- **DNS Architecture (009-2)**: `vijote.dev` is authoritative at Cloudflare (Route 53 zone unused). `demo.vijote.dev` is a CNAME (proxied=false) managed via `create-cloudflare-record.sh` using SSM SecureString `/sdd-k8s-platform/secrets/cloudflare-api-token`.
+- **User Contact Info**: User ACME contact email is `juanignaciodom3@gmail.com` (public `letsencrypt-prod` ClusterIssuer contact).
+
+## Learned Facts & Compatibility Rules
+- **K8s 1.28.0 Version Alignment & Strict Decoding**: Manifests targeting higher K8s releases are rejected by K8s 1.28 API strict decoding (e.g., `selectableFields`).
+  - **EBS CSI Driver**: Minor version MUST match cluster (use `v1.28.0`).
+  - **cert-manager**: Pin to `<= v1.19.4`. Webhooks require deployment rollout wait (`rollout status deployment/cert-manager-webhook`) before applying ClusterIssuers to prevent connection refused errors.
+- **Node & Pod Networking**: Flannel VXLAN UDP 8472 and API TCP 4240 ingress (VPC CIDR) must be allowed on BOTH control plane and worker SGs, or cross-node pod-to-pod drops break internal DNS resolution.
+- **Cloud Controller Manager (CCM)**: Uses public EKS Distro images (`public.ecr.aws/eks-distro/kubernetes/cloud-provider-aws/cloud-provider-aws:...`). EC2 instances require `kubernetes.io/cluster/<cluster-name>=owned` tag for `ClusterID()` init. CCM secure port 10258 is TLS-only — `httpGet` liveness probe MUST set `scheme: HTTPS`. Kubeadm nodes require `spec.providerID` (`aws:///<az>/<id>`) and CCM ClusterRole needs `get+watch` on `services` & `services/status`. Ingress Service requires `service.beta.kubernetes.io/aws-load-balancer-subnets` public subnet annotation.
+
+## Known Gotchas
+- **File Persistence**: `AGENTS.md` is gitignored in this repo — edits persist on disk but cannot be committed.
+- **AL2023 Bootstrap**: `dnf config-manager --add-repo` writes repo files without `gpgkey` lines — write `/etc/yum.repos.d/kubernetes.repo` explicitly with `gpgcheck=1` and `gpgkey`. Requires `modprobe br_netfilter` and `/etc/sysctl.d/99-kubernetes.conf` (`ip_forward=1`, `bridge-nf-call-iptables=1`). Fetch IMDSv2 token (`PUT /latest/api/token`) first.
+- **Terraform State & Execution Constraints**:
+  - `null_resource` applies re-run ONLY when `triggers` change. Include control-plane instance ID in triggers so cluster recreations don't silently skip CNI/CCM/ingress applies.
+  - Base64-embedded SSM script edits require a Terraform `triggers` map bump to re-run.
+  - SSM SendCommand `--comment` strings in `null_resource` applies must remain strictly under 100 characters.
+  - Dependency cycles: `apply_aws_ccm` depends on `apply_app_frontend_ingress`. Avoid adding downstream CCM dependents back to ingress dependencies.
+- **Terraform HCL Syntax**: Splat expressions fail on `for_each` maps (`sort([for _, r in map : r.attr])`). Local-exec provisioners run via `/bin/sh` on Ubuntu runners — set `interpreter = ["/bin/bash", "-c"]`. Never use `templatefile()` on bash scripts containing `${VAR}`; use `replace()`.
+- **SSM & Pod Diagnostics**: Run Command executes as `ssm-user`. Always prefix K8s commands with `sudo KUBECONFIG=/etc/kubernetes/admin.conf kubectl`. Fast-crashing pod logs can be inspected directly on nodes at `/var/log/pods/<ns>_<pod>/<container>/0.log`.
+- Terraform `replace(file(...), "%%PLACEHOLDER%%", value)` substitutes ALL occurrences — including any inside a guard/comparison that references the same placeholder. A guard like `[ "$VAR" = "%%PLACEHOLDER%%" ]` becomes `[ "$VAR" = "<real value>" ]` (always true) after substitution. Keep placeholder occurrences to exactly one (the assignment line); use only a `-z` empty check in guards. (014-ecr-pull-secret-guard-fix)

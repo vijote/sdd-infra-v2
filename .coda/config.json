@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.specify/scripts/bash/setup-plan.sh:=)",
+      "Bash(.specify/scripts/bash/setup-tasks.sh:=)",
+      "Bash(bash ./.specify/scripts/bash/setup-plan.sh -Json:=)",
+      "Bash(bash ./.specify/scripts/bash/setup-tasks.sh -Json:=)",
+      "Bash(bash ./.specify/scripts/bash/setup-tasks.sh:=)",
+      "Bash(bash ./.specify/scripts/bash/check-prerequisites.sh -Json -RequireTasks -IncludeTasks:=)",
+      "Bash(bash ./.specify/scripts/bash/check-prerequisites.sh -RequireTasks -IncludeTasks:=)",
+      "Bash(bash ./.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks:=)",
+      "Bash(bash .specify/scripts/bash/setup-plan.sh --json:=)"
+    ]
+  },
+  "compaction": {
+    "threshold": 0.8
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".coda/hooks/inject-no-overthinking.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "reasoning": {
+    "enabled": true,
+    "effort": "none"
+  }
+}
