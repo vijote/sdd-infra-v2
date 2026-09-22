@@ -1,3 +1,10 @@
+---
+name: 009-1-node-route53-wildcard
+description: Replace the incomplete granular route53 action list with a route53:* wildcard on the node role (the zone lookup needs ListHostedZones) and bump the apply trigger so the SSM command re-runs.
+date: 2026-09-17
+status: Implemented
+---
+
 # Spec: node_route53 Wildcard + Re-apply Trigger
 
 **Feature Branch**: `009-1-node-route53-wildcard` | **Date**: 2026-09-17 | **Status**: Draft

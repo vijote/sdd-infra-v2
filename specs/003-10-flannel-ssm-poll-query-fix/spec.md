@@ -1,3 +1,10 @@
+---
+name: 003-10-flannel-ssm-poll-query-fix
+description: Correct the Flannel provisioner status-poll JMESPath query to the flat Status key of get-command-invocation so a successful apply is no longer reported as a timeout.
+date: 2026-09-09
+status: Implemented
+---
+
 # Spec: Flannel SSM Poll Query Fix
 
 **Feature Branch**: `003-10-flannel-ssm-poll-query-fix` | **Date**: 2026-09-09 | **Status**: Draft

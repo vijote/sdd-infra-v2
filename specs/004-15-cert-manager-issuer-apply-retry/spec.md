@@ -1,3 +1,10 @@
+---
+name: 004-15-cert-manager-issuer-apply-retry
+description: Wrap the ClusterIssuer apply in a bounded retry loop (10 attempts x 5s) to ride out the transient webhook connection-refused window on fresh clusters.
+date: 2026-09-17
+status: Implemented
+---
+
 # Spec: cert-manager ClusterIssuer Apply Retry
 
 **Feature Branch**: `004-15-cert-manager-issuer-apply-retry` | **Date**: 2026-09-17 | **Status**: Draft

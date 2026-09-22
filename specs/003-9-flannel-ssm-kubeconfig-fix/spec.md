@@ -1,3 +1,10 @@
+---
+name: 003-9-flannel-ssm-kubeconfig-fix
+description: Prefix the kubectl apply in the Flannel SSM command with KUBECONFIG=/etc/kubernetes/admin.conf because SSM Run Command runs in a minimal environment where kubectl falls back to localhost:8080.
+date: 2026-09-09
+status: Implemented
+---
+
 # Spec: Flannel SSM Kubeconfig Fix
 
 **Feature Branch**: `003-9-flannel-ssm-kubeconfig-fix` | **Date**: 2026-09-09 | **Status**: Draft

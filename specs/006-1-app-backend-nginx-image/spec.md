@@ -1,3 +1,10 @@
+---
+name: 006-1-app-backend-nginx-image
+description: Re-image the app-backend Deployment from crccheck/hello-world (no HTTP server, probe failures) to nginx:alpine, a real minimal HTTP server on port 80.
+date: 2026-09-12
+status: Implemented
+---
+
 # Spec: App Backend Image Fix (nginx:alpine)
 
 **Feature Branch**: `006-1-app-backend-nginx-image` | **Date**: 2026-09-12 | **Status**: Draft

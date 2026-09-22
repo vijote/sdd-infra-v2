@@ -1,3 +1,10 @@
+---
+name: 004-12-pre-destroy-elb-cleanup
+description: Add a pre-destroy workflow step that finds and deletes CCM-created Classic ELBs in the cluster VPC so their ENIs are released before terraform destroy deletes the subnets and IGW.
+date: 2026-09-16
+status: Implemented
+---
+
 # Spec: Pre-Destroy CCM ELB Cleanup
 
 **Feature Branch**: `004-12-pre-destroy-elb-cleanup` | **Date**: 2026-09-16 | **Status**: Draft

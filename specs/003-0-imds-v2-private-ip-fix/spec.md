@@ -1,3 +1,10 @@
+---
+name: 003-0-imds-v2-private-ip-fix
+description: Fix the control plane bootstrap to fetch the private IP via an IMDSv2 session token (AL2023 enforces token-based metadata) and correct the KubeletConfiguration apiVersion to kubelet.k8s.io/v1beta1.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: IMDSv2 Private IP Fix
 
 **Feature Branch**: `003-0-imds-v2-private-ip-fix` | **Date**: 2026-09-05 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 003-0-kubeadm-preflight-sysctl-fix
+description: Load br_netfilter and persist required sysctls (ip_forward, bridge-nf-call-iptables) in the control plane bootstrap so kubeadm init preflight passes, and remove the redundant KubeletConfiguration document.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Kubeadm Preflight Sysctl Fix
 
 **Feature Branch**: `003-0-kubeadm-preflight-sysctl-fix` | **Date**: 2026-09-05 | **Status**: Draft

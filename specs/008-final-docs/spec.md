@@ -1,3 +1,10 @@
+---
+name: 008-final-docs
+description: Produce the final architecture documentation, operational runbooks, and security model documentation for all implemented components.
+date: 2026-09-01
+status: Implemented
+---
+
 # Spec: Final Documentation
 
 **Feature Branch**: `008-final-docs` | **Date**: 2026-09-01 | **Status**: Draft

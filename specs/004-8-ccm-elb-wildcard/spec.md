@@ -1,3 +1,10 @@
+---
+name: 004-8-ccm-elb-wildcard
+description: Replace the incomplete granular elasticloadbalancing action list with a wildcard elasticloadbalancing:* on the node CCM policy to end the per-action 403 whack-a-mole.
+date: 2026-09-14
+status: Implemented
+---
+
 # Spec: CCM ELB Wildcard IAM Action
 
 **Feature Branch**: `004-8-ccm-elb-wildcard` | **Date**: 2026-09-14 | **Status**: Draft

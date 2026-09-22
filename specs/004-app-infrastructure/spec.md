@@ -1,3 +1,10 @@
+---
+name: 004-app-infrastructure
+description: Deploy the EBS CSI driver with node-role IAM and ebs-gp3 StorageClass, the NGINX ingress controller, and the sdd-apps namespace as the application infrastructure base.
+date: 2026-09-09
+status: Implemented
+---
+
 # Spec: Application Infrastructure (EBS CSI + Ingress + Namespaces)
 
 **Feature Branch**: `004-app-infrastructure` | **Date**: 2026-09-09 | **Status**: Draft

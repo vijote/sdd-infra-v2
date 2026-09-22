@@ -1,3 +1,10 @@
+---
+name: 014-ecr-pull-secret-guard-fix
+description: Fix the self-defeating REGISTRY guard in create-ecr-pull-secret.sh (Terraform's replace() substituted the placeholder inside the guard's own comparison) to an empty-check only, with a trigger bump to re-run.
+date: 2026-09-19
+status: Implemented
+---
+
 # Spec: ECR Pull Secret Guard Fix
 
 **Feature Branch**: `014-ecr-pull-secret-guard-fix` | **Date**: 2026-09-19 | **Status**: Draft

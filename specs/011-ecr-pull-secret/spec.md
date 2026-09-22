@@ -1,3 +1,10 @@
+---
+name: 011-ecr-pull-secret
+description: Create the ecr-pull-secret dockerconfigjson Secret in sdd-apps (minted on the control plane via SSM) so kubelet can pull images from ECR.
+date: 2026-09-19
+status: Implemented
+---
+
 # Spec: ECR Pull Secret (in-cluster)
 
 **Feature Branch**: `011-ecr-pull-secret` | **Date**: 2026-09-19 | **Status**: Draft

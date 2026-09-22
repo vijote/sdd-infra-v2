@@ -1,3 +1,10 @@
+---
+name: 001-6-existing-bucket-data-source
+description: Replace the aws_s3_bucket resource in the terraform-backend module with a data source for the pre-existing state bucket, updating all dependent resource references.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: Existing Bucket Data Source
 
 **Feature Branch**: `001-6-existing-bucket-data-source` | **Date**: 2026-09-02 | **Status**: Draft

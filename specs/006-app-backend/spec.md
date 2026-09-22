@@ -1,3 +1,10 @@
+---
+name: 006-app-backend
+description: Deploy the app-backend scaffold (2 replicas) + ClusterIP Service in sdd-apps using a public Docker Hub image, with ECR deferred until real app repos exist.
+date: 2026-09-12
+status: Implemented
+---
+
 # Spec: Application Backend (Scaffold API)
 
 **Feature Branch**: `006-app-backend` | **Date**: 2026-09-12 | **Status**: Draft

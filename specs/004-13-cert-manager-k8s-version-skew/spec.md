@@ -1,3 +1,10 @@
+---
+name: 004-13-cert-manager-k8s-version-skew
+description: Pin cert-manager from v1.21.1 to v1.19.4 because v1.20+ CRDs use selectableFields, which the K8s 1.28 API server rejects with a strict decoding error.
+date: 2026-09-16
+status: Implemented
+---
+
 # Spec: cert-manager K8s 1.28 Version Skew Fix
 
 **Feature Branch**: `004-13-cert-manager-k8s-version-skew` | **Date**: 2026-09-16 | **Status**: Draft

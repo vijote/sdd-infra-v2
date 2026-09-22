@@ -1,3 +1,10 @@
+---
+name: 006-main-config
+description: Define the root Terraform module composition with remote state, data sources, provider configuration, and kubeconfig generation for cluster access.
+date: 2026-09-01
+status: Implemented
+---
+
 # Spec: Main Configuration
 
 **Feature Branch**: `006-main-config` | **Date**: 2026-09-01 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 004-3-ebs-csi-k8s-version-skew
+description: Re-pin the EBS CSI driver from release-1.65 to v1.28.0 so its CSIDriver manifest is accepted by the K8s 1.28 API server (nodeAllocatableUpdatePeriodSeconds is unknown there).
+date: 2026-09-12
+status: Implemented
+---
+
 # Spec: EBS CSI Driver K8s Version Skew Fix
 
 **Feature Branch**: `004-3-ebs-csi-k8s-version-skew` | **Date**: 2026-09-12 | **Status**: Draft

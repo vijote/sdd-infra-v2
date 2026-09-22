@@ -1,3 +1,10 @@
+---
+name: 003-6-flannel-ssm-params-json-fix
+description: Fix the over-escaped quotes in the SSM send-command --parameters argument so the AWS CLI receives valid JSON instead of literal backslash-quotes.
+date: 2026-09-06
+status: Implemented
+---
+
 # Spec: Flannel SSM Params JSON Fix
 
 **Feature Branch**: `003-6-flannel-ssm-params-json-fix` | **Date**: 2026-09-06 | **Status**: Draft

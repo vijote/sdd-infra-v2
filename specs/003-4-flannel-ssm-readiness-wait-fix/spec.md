@@ -1,3 +1,10 @@
+---
+name: 003-4-flannel-ssm-readiness-wait-fix
+description: Add an SSM agent registration wait loop before send-command in the Flannel provisioner so the command is not rejected with InvalidInstanceId on freshly launched instances.
+date: 2026-09-06
+status: Implemented
+---
+
 # Spec: Flannel SSM Readiness Wait Fix
 
 **Feature Branch**: `003-4-flannel-ssm-readiness-wait-fix` | **Date**: 2026-09-06 | **Status**: Draft

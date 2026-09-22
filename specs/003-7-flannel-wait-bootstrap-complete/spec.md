@@ -1,3 +1,10 @@
+---
+name: 003-7-flannel-wait-bootstrap-complete
+description: Gate the Flannel SSM command on the join-command parameter (bootstrap-complete signal) instead of SSM agent registration, and make the worker bootstrap poll for it.
+date: 2026-09-06
+status: Implemented
+---
+
 # Spec: Flannel Wait Bootstrap Complete
 
 **Feature Branch**: `003-7-flannel-wait-bootstrap-complete` | **Date**: 2026-09-06 | **Status**: Draft

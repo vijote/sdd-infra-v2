@@ -1,3 +1,10 @@
+---
+name: 003-14-flannel-vxlan-sg
+description: Add Flannel VXLAN (UDP 8472) and Flannel API (TCP 4240) ingress rules from the VPC CIDR to both control plane and worker security groups to enable cross-node pod networking.
+date: 2026-09-12
+status: Implemented
+---
+
 # Spec: Flannel VXLAN Security Group Rules (Cross-Node Pod Networking)
 
 **Feature Branch**: `003-14-flannel-vxlan-sg` | **Date**: 2026-09-12 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 007-1-ingress-webhook-readiness-gate
+description: Prepend a kubectl rollout status gate for the ingress-nginx controller before applying the Ingress, so the validating webhook is serving and the Ingress create does not fail with connection refused.
+date: 2026-09-13
+status: Implemented
+---
+
 # Spec: Ingress Webhook Readiness Gate
 
 **Feature Branch**: `007-1-ingress-webhook-readiness-gate` | **Date**: 2026-09-13 | **Status**: Draft

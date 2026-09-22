@@ -1,3 +1,10 @@
+---
+name: 005-mysql-statefulset
+description: Deploy the MySQL 8.0.36 StatefulSet with PVC, Secret, and ClusterIP Service in sdd-apps, establishing the SSM Parameter Store as the single source of truth for cluster secrets.
+date: 2026-09-12
+status: Implemented
+---
+
 # Spec: MySQL StatefulSet (In-Cluster Database)
 
 **Feature Branch**: `005-mysql-statefulset` | **Date**: 2026-09-12 | **Status**: Draft

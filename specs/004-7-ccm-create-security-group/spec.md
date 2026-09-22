@@ -1,3 +1,10 @@
+---
+name: 004-7-ccm-create-security-group
+description: Add the full EC2 security group lifecycle actions (Create/Authorize/Revoke) to the node CCM policy so the CCM can create and configure the ELB's security group.
+date: 2026-09-14
+status: Implemented
+---
+
 # Spec: CCM CreateSecurityGroup IAM Action
 
 **Feature Branch**: `004-7-ccm-create-security-group` | **Date**: 2026-09-14 | **Status**: Draft

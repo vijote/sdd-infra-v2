@@ -1,3 +1,10 @@
+---
+name: 003-0-worker-output-splat-fix
+description: Replace the invalid list splat on the for_each worker map with a sorted for expression so the worker_instance_ids output resolves.
+date: 2026-09-06
+status: Implemented
+---
+
 # Spec: Worker Output Splat Fix
 
 **Feature Branch**: `003-0-worker-output-splat-fix` | **Date**: 2026-09-06 | **Status**: Draft

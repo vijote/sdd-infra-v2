@@ -1,3 +1,10 @@
+---
+name: 003-0-assume-role-iam-permissions
+description: Add a wildcard iam:* inline policy (TerraformIamAccess) to the github-actions-assume-role so Terraform can create IAM roles and instance profiles, which PowerUserAccess excludes.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Assume Role IAM Permissions
 
 **Feature Branch**: `003-0-assume-role-iam-permissions` | **Date**: 2026-09-05 | **Status**: Draft

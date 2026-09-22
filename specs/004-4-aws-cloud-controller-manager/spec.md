@@ -1,3 +1,10 @@
+---
+name: 004-4-aws-cloud-controller-manager
+description: Deploy the AWS Cloud Controller Manager v1.28.x with node-role ELB/EC2 IAM and a public-subnet annotation on the ingress Service so the LoadBalancer gets an internet-facing ELB.
+date: 2026-09-12
+status: Implemented
+---
+
 # Spec: AWS Cloud Controller Manager (CCM)
 
 **Feature Branch**: `004-4-aws-cloud-controller-manager` | **Date**: 2026-09-12 | **Status**: Draft

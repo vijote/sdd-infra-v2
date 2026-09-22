@@ -1,3 +1,10 @@
+---
+name: 004-2-ebs-csi-git-missing
+description: Install git on the control plane (bootstrap + idempotent SSM step) so kubectl apply -k can fetch the EBS CSI kustomization, and add set -e so SSM command failures abort instead of being swallowed.
+date: 2026-09-10
+status: Implemented
+---
+
 # Spec: EBS CSI Install — git Missing on Control Plane
 
 **Feature Branch**: `004-2-ebs-csi-git-missing` | **Date**: 2026-09-10 | **Status**: Draft

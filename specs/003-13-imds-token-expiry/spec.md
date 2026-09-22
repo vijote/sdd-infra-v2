@@ -1,3 +1,10 @@
+---
+name: 003-13-imds-token-expiry
+description: Move the instance-id IMDS fetch to the top of the control plane bootstrap while the IMDSv2 token is still fresh, so the per-run bootstrap signal parameter is published successfully.
+date: 2026-09-11
+status: Implemented
+---
+
 # Spec: IMDS Token Expiry — Bootstrap Instance-ID Publication
 
 **Feature Branch**: `003-13-imds-token-expiry` | **Date**: 2026-09-11 | **Status**: Draft

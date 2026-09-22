@@ -1,3 +1,10 @@
+---
+name: 009-route53-domain
+description: Create a Route 53 ALIAS record for demo.vijote.dev pointing at the CCM-created ALB (via SSM, since the ALB is out of Terraform state) and enable Let's Encrypt TLS on the Ingress.
+date: 2026-09-16
+status: Implemented
+---
+
 # Spec: Route 53 Domain + Let's Encrypt TLS
 
 **Feature Branch**: `009-route53-domain` | **Date**: 2026-09-16 | **Status**: Draft
