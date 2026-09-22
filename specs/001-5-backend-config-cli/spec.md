@@ -1,3 +1,10 @@
+---
+name: 001-5-backend-config-cli
+description: Move S3 backend bucket and region out of the backend block (where variables are disallowed) into -backend-config CLI arguments passed by the GitHub Actions workflow.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: Backend Config CLI
 
 **Feature Branch**: `001-5-backend-config-cli` | **Date**: 2026-09-02 | **Status**: Draft

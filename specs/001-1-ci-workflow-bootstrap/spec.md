@@ -1,3 +1,10 @@
+---
+name: 001-1-ci-workflow-bootstrap
+description: Bootstrap the Terraform apply workflow with repository variables and two-step AWS credentials configuration (bootstrap role, then chained Terraform role) for automated deployment.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: CI Workflow Bootstrap
 
 **Feature Branch**: `001-1-ci-workflow-bootstrap` | **Date**: 2026-09-02 | **Status**: Draft

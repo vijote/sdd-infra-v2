@@ -1,3 +1,10 @@
+---
+name: 002-vpc-foundation
+description: Create the VPC foundation with public and private subnets across three AZs, Internet Gateway, NAT Gateway, and route tables as the Phase 1 networking base.
+date: 2026-09-01
+status: Implemented
+---
+
 # Spec: VPC Foundation
 
 **Feature Branch**: `002-vpc-foundation` | **Date**: 2026-09-01 | **Status**: Draft

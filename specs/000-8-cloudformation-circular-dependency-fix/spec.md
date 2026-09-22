@@ -1,3 +1,10 @@
+---
+name: 000-8-cloudformation-circular-dependency-fix
+description: Split the single CloudFormation stack into two sequential stacks (bootstrap role, then assume role) to break the circular dependency between the two IAM roles.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: CloudFormation Circular Dependency Fix
 
 **Feature Branch**: `000-8-cloudformation-circular-dependency-fix` | **Date**: 2026-09-02 | **Status**: Draft

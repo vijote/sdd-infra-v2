@@ -1,3 +1,10 @@
+---
+name: 001-4-remove-tags-property
+description: Remove the unsupported tags property from the terraform-backend module call in the dev environment to fix Terraform validation errors.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: Remove Tags Property from Terraform Module
 
 **Feature Branch**: `001-4-remove-tags-property` | **Date**: 2026-09-02 | **Status**: Draft

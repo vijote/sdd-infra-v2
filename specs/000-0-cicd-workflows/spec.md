@@ -1,3 +1,10 @@
+---
+name: 000-0-cicd-workflows
+description: Define the full Terraform apply GitHub Actions workflow with OIDC authentication, phase detection via plan JSON, and job dependencies for all infrastructure phases.
+date: 2026-09-01
+status: Implemented
+---
+
 # Spec: CI/CD Workflows
 
 **Feature Branch**: `000-0-cicd-workflows` | **Date**: 2026-09-01 | **Status**: Draft

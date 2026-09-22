@@ -1,3 +1,10 @@
+---
+name: 001-3-remove-trust-condition
+description: Remove the ExternalId and PrincipalArn StringEquals conditions from the assume role trust policy that were blocking role chaining, keeping principal-based trust only.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: Remove Trust Condition from Assume Role
 
 **Feature Branch**: `001-3-remove-trust-condition` | **Date**: 2026-09-02 | **Status**: Draft

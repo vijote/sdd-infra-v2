@@ -1,3 +1,10 @@
+---
+name: 001-2-sts-tagsession-role
+description: Add sts:TagSession to the assume role trust policy so GitHub Actions can pass session tags during role assumption for better audit attribution.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: STS TagSession Role Enhancement
 
 **Feature Branch**: `001-2-sts-tagsession-role` | **Date**: 2026-09-02 | **Status**: Draft

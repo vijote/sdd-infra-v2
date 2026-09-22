@@ -1,3 +1,10 @@
+---
+name: 000-6-terraform-workflow-fix
+description: Fix the Terraform apply workflow plan step to correctly generate and parse the binary plan file and JSON output for phase detection and downstream job dependencies.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: Terraform Workflow Fix
 
 **Feature Branch**: `000-6-terraform-workflow-fix` | **Date**: 2026-09-02 | **Status**: Draft

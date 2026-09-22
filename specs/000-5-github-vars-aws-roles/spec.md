@@ -1,3 +1,10 @@
+---
+name: 000-5-github-vars-aws-roles
+description: Configure GitHub repository variables and two-tier AWS role chaining (bootstrap → assume) via CloudFormation to enable secure OIDC credential flow for Terraform workflows.
+date: 2026-09-01
+status: Implemented
+---
+
 # Spec: GitHub Variables & AWS Role Chaining
 
 **Feature Branch**: `000-5-github-vars-aws-roles` | **Date**: 2026-09-01 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 000-7-github-actions-role-chaining
+description: Replace manual STS assume-role shell steps with native AWS role chaining via aws-actions/configure-aws-credentials@v4 in all GitHub Actions workflows.
+date: 2026-09-02
+status: Implemented
+---
+
 # Spec: GitHub Actions Role Chaining
 
 **Feature Branch**: `000-7-github-actions-role-chaining` | **Date**: 2026-09-02 | **Status**: Draft

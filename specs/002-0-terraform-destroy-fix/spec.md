@@ -1,3 +1,10 @@
+---
+name: 002-0-terraform-destroy-fix
+description: Correct the manual terraform-destroy workflow to mirror the working apply workflow — dev working directory, S3 backend config, 2-step role chain without role-external-id, and removal of stale vars.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Terraform Destroy Workflow Fix
 
 **Feature Branch**: `002-0-terraform-destroy-fix` | **Date**: 2026-09-05 | **Status**: Draft
