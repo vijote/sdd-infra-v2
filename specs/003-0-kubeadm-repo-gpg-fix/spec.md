@@ -1,3 +1,10 @@
+---
+name: 003-0-kubeadm-repo-gpg-fix
+description: Replace dnf config-manager --add-repo with an explicit kubernetes.repo file declaring gpgcheck=1 and the official gpgkey so kubelet/kubeadm/kubectl install passes GPG verification.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Kubeadm Repo GPG Fix
 
 **Feature Branch**: `003-0-kubeadm-repo-gpg-fix` | **Date**: 2026-09-05 | **Status**: Draft

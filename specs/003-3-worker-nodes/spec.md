@@ -1,3 +1,10 @@
+---
+name: 003-3-worker-nodes
+description: Create two worker EC2 instances that join the cluster via the SSM join command, and apply the Flannel CNI to complete a 3-node cluster with working pod networking.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Worker Nodes + CNI (3-Node Cluster)
 
 **Feature Branch**: `003-3-worker-nodes` | **Date**: 2026-09-05 | **Status**: Draft

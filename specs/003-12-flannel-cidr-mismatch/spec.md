@@ -1,3 +1,10 @@
+---
+name: 003-12-flannel-cidr-mismatch
+description: Sed the stock Flannel manifest Network CIDR to match the kubeadm podSubnet (192.168.0.0/16) and restart the daemonset so flanneld acquires leases and pods get IPs.
+date: 2026-09-10
+status: Implemented
+---
+
 # Spec: Flannel CNI CIDR Mismatch Fix
 
 **Feature Branch**: `003-12-flannel-cidr-mismatch` | **Date**: 2026-09-10 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 003-2-control-plane
+description: Create the control plane EC2 instance with user-data bootstrap that installs containerd and kubeadm v1.28.0, runs kubeadm init, and publishes the join command to SSM Parameter Store.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Control Plane (kubeadm init)
 
 **Feature Branch**: `003-2-control-plane` | **Date**: 2026-09-05 | **Status**: Draft

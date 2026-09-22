@@ -1,3 +1,10 @@
+---
+name: 003-0-node-role-ssm-permissions
+description: Add a scoped inline policy granting ssm:PutParameter and ssm:GetParameter on /sdd-k8s-platform/* to the node role so bootstraps can publish and read the kubeadm join command.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Node Role SSM Permissions
 
 **Feature Branch**: `003-0-node-role-ssm-permissions` | **Date**: 2026-09-05 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 003-8-flannel-join-param-delete-removal
+description: Remove the delete-parameter step from the Flannel provisioner because the control plane is persistent and never re-publishes the join command, which made the wait time out on subsequent applies.
+date: 2026-09-06
+status: Implemented
+---
+
 # Spec: Flannel Join-Param Delete Removal
 
 **Feature Branch**: `003-8-flannel-join-param-delete-removal` | **Date**: 2026-09-06 | **Status**: Draft

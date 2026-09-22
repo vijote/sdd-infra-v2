@@ -1,3 +1,10 @@
+---
+name: 003-5-flannel-local-exec-bash-fix
+description: Set interpreter = ["/bin/bash", "-c"] on the Flannel local-exec provisioner so set -o pipefail works on the dash-based /bin/sh of GitHub runners.
+date: 2026-09-06
+status: Implemented
+---
+
 # Spec: Flannel Local-Exec Bash Fix
 
 **Feature Branch**: `003-5-flannel-local-exec-bash-fix` | **Date**: 2026-09-06 | **Status**: Draft

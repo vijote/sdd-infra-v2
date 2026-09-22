@@ -1,3 +1,10 @@
+---
+name: 003-1-cluster-plumbing
+description: Create the cluster security groups (control plane and worker) and the node IAM role with instance profile as the plumbing base for the Kubernetes cluster.
+date: 2026-09-05
+status: Implemented
+---
+
 # Spec: Cluster Plumbing (Security Groups + IAM)
 
 **Feature Branch**: `003-1-cluster-plumbing` | **Date**: 2026-09-05 | **Status**: Draft

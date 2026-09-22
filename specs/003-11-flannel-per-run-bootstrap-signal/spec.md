@@ -1,3 +1,10 @@
+---
+name: 003-11-flannel-per-run-bootstrap-signal
+description: Publish a per-run bootstrap signal (control plane instance ID in SSM) so the Flannel gate and worker bootstrap wait for the current run's join command instead of a stale one from a previous run.
+date: 2026-09-09
+status: Implemented
+---
+
 # Spec: Flannel Per-Run Bootstrap Signal
 
 **Feature Branch**: `003-11-flannel-per-run-bootstrap-signal` | **Date**: 2026-09-09 | **Status**: Draft
