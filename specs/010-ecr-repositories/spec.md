@@ -1,3 +1,10 @@
+---
+name: 010-ecr-repositories
+description: Create the frontend and backend ECR repositories in a new ecr Terraform module with mutable image tags, exposing their URLs as dev-environment outputs.
+date: 2026-09-19
+status: Implemented
+---
+
 # Spec: ECR Repositories (frontend + backend)
 
 **Feature Branch**: `010-ecr-repositories` | **Date**: 2026-09-19 | **Status**: Draft

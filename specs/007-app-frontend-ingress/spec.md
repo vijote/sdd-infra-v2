@@ -1,3 +1,10 @@
+---
+name: 007-app-frontend-ingress
+description: Deploy the app-frontend scaffold (2 replicas) + ClusterIP Service + app-ingress Ingress in sdd-apps, proving path-based routing through the existing ingress-nginx LoadBalancer.
+date: 2026-09-12
+status: Implemented
+---
+
 # Spec: Application Frontend + Ingress
 
 **Feature Branch**: `007-app-frontend-ingress` | **Date**: 2026-09-12 | **Status**: Draft

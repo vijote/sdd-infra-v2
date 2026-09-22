@@ -1,3 +1,10 @@
+---
+name: 009-2-cloudflare-dns-record
+description: Replace the Route 53 record with a Cloudflare CNAME for demo.vijote.dev (the domain is authoritative at Cloudflare, so the Route 53 ALIAS was invisible) and delete the now-unused node_route53 policy.
+date: 2026-09-17
+status: Implemented
+---
+
 # Spec: Cloudflare DNS Record (replace Route 53)
 
 **Feature Branch**: `009-2-cloudflare-dns-record` | **Date**: 2026-09-17 | **Status**: Draft

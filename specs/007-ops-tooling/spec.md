@@ -1,3 +1,10 @@
+---
+name: 007-ops-tooling
+description: Provide operational tooling — validation scripts, health checks, and operational procedures — for deployment automation and cluster access.
+date: 2026-09-01
+status: Implemented
+---
+
 # Spec: Operational Tooling
 
 **Feature Branch**: `007-ops-tooling` | **Date**: 2026-09-01 | **Status**: Draft

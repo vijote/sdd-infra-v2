@@ -1,3 +1,10 @@
+---
+name: 005-ingress-nginx-service-ports-fix
+description: Add the missing spec.ports block (80/HTTP, 443/HTTPS) to the ingress-nginx-controller Service so the API server accepts it and the CCM creates a valid ELB health check.
+date: 2026-09-12
+status: Implemented
+---
+
 # 005‑ingress‑nginx‑service‑ports‑fix
 
 ## Summary

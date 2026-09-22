@@ -1,3 +1,10 @@
+---
+name: 013-ecr-url-diagnostic
+description: Add a manual-dispatch GitHub Actions workflow that prints the ECR repository URL outputs from state to confirm or refute the empty-state-URL hypothesis behind 011's REGISTRY-not-substituted failure.
+date: 2026-09-19
+status: Implemented
+---
+
 # Spec: ECR URL Diagnostic Workflow
 
 **Feature Branch**: `013-ecr-url-diagnostic` | **Date**: 2026-09-19 | **Status**: Draft

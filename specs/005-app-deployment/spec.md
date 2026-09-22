@@ -1,3 +1,10 @@
+---
+name: 005-app-deployment
+description: Deploy the MySQL 8.0 StatefulSet with EBS-backed PVC, Kubernetes Secrets for credentials, and the sample application deployments with cert-managed TLS.
+date: 2026-09-01
+status: Implemented
+---
+
 # Spec: Application Deployment
 
 **Feature Branch**: `005-app-deployment` | **Date**: 2026-09-01 | **Status**: Draft
