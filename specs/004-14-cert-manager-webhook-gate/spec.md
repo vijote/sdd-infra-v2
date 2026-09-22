@@ -1,3 +1,10 @@
+---
+name: 004-14-cert-manager-webhook-gate
+description: Gate the ClusterIssuer apply on kubectl rollout status of the cert-manager webhook and cainjector deployments so the validating webhook is serving before issuers are created.
+date: 2026-09-16
+status: Implemented
+---
+
 # Spec: cert-manager Webhook Readiness Gate
 
 **Feature Branch**: `004-14-cert-manager-webhook-gate` | **Date**: 2026-09-16 | **Status**: Draft

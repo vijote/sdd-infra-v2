@@ -1,3 +1,10 @@
+---
+name: 004-5-ccm-clusterid-diagnostic
+description: Add --v=4 verbose logging to the CCM and capture its startup logs to diagnose the ClusterID init failure (tag not found) after all external factors were ruled out.
+date: 2026-09-13
+status: Implemented
+---
+
 # Spec: CCM ClusterID Diagnostic (Verbose Logging)
 
 **Feature Branch**: `004-5-ccm-clusterid-diagnostic` | **Date**: 2026-09-13 | **Status**: Draft

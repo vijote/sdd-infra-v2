@@ -1,3 +1,10 @@
+---
+name: 004-10-reapply-manifests-on-recreation
+description: Add the control-plane instance ID to the triggers map of all six manifest-apply null_resources so cluster recreations re-run the applies instead of silently skipping them.
+date: 2026-09-15
+status: Implemented
+---
+
 # Spec: Re-apply Cluster Manifests on Control-Plane Recreation
 
 **Feature Branch**: `004-10-reapply-manifests-on-recreation` | **Date**: 2026-09-15 | **Status**: Draft

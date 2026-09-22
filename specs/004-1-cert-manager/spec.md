@@ -1,3 +1,10 @@
+---
+name: 004-1-cert-manager
+description: Install cert-manager with selfsigned and letsencrypt-prod (HTTP-01) ClusterIssuers to automate TLS certificate issuance for Ingress resources.
+date: 2026-09-09
+status: Implemented
+---
+
 # Spec: cert-manager + Let's Encrypt (TLS Automation)
 
 **Feature Branch**: `004-1-cert-manager` | **Date**: 2026-09-09 | **Status**: Draft

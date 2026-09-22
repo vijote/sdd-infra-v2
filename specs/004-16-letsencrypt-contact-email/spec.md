@@ -1,3 +1,10 @@
+---
+name: 004-16-letsencrypt-contact-email
+description: Replace the placeholder admin@example.com ACME contact on the letsencrypt-prod ClusterIssuer with a real email so Let's Encrypt accepts the account registration.
+date: 2026-09-19
+status: Implemented
+---
+
 # Spec: letsencrypt-prod ACME Contact Email
 
 **Feature Branch**: `004-16-letsencrypt-contact-email` | **Date**: 2026-09-19 | **Status**: Draft

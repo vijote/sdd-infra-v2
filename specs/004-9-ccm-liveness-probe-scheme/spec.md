@@ -1,3 +1,10 @@
+---
+name: 004-9-ccm-liveness-probe-scheme
+description: Set scheme: HTTPS on the CCM liveness probe httpGet because the health endpoint on port 10258 is TLS-only, fixing the 400 probe failures and container restart loop.
+date: 2026-09-14
+status: Implemented
+---
+
 # Spec: CCM Liveness Probe HTTPS Scheme
 
 **Feature Branch**: `004-9-ccm-liveness-probe-scheme` | **Date**: 2026-09-14 | **Status**: Draft

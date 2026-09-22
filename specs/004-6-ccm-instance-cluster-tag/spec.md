@@ -1,3 +1,10 @@
+---
+name: 004-6-ccm-instance-cluster-tag
+description: Add the kubernetes.io/cluster/sdd-k8s-platform=owned tag to the control plane and worker EC2 instances so the CCM's ClusterID() init finds it via DescribeInstances.
+date: 2026-09-13
+status: Implemented
+---
+
 # Spec: CCM Instance Cluster Tag
 
 **Feature Branch**: `004-6-ccm-instance-cluster-tag` | **Date**: 2026-09-13 | **Status**: Draft

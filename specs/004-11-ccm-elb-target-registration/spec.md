@@ -1,3 +1,10 @@
+---
+name: 004-11-ccm-elb-target-registration
+description: Set spec.providerID on all nodes (bootstrap patch) and add get+watch on services to the CCM ClusterRole so the CCM can map nodes to instances and register ELB targets.
+date: 2026-09-15
+status: Implemented
+---
+
 # Spec: CCM ELB Target Registration (Node providerID + RBAC)
 
 **Feature Branch**: `004-11-ccm-elb-target-registration` | **Date**: 2026-09-15 | **Status**: Draft
