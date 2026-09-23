@@ -184,7 +184,7 @@ resource "null_resource" "apply_app_infrastructure" {
   triggers = {
     ebs_csi_ref   = "v1.28.0" # 004-3: driver minor must match cluster K8s minor (1.28)
     ingress_ref   = "controller-v1.15.1"
-    git_bootstrap = "1" # 004-2: re-runs the provisioner to install git on the running control plane
+    git_bootstrap = "1"                                            # 004-2: re-runs the provisioner to install git on the running control plane
     instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
@@ -270,7 +270,7 @@ resource "null_resource" "apply_cert_manager" {
 
   triggers = {
     cert_manager_ref = "v1.19.4+webhook-gate+issuer-retry+issuer-email" # 004-13: v1.20+ CRDs need K8s 1.30+; 004-14: gate issuers on webhook rollout; 004-15: retry ClusterIssuer apply (webhook startup race); 004-16: real ACME contact email (LE rejects example.com)
-    instance_id      = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
+    instance_id      = module.control_plane.control_plane_instance_id   # 004-10: re-apply on cluster recreation
   }
 
   provisioner "local-exec" {
@@ -421,13 +421,15 @@ resource "null_resource" "apply_mysql" {
 
 # Application backend scaffold (006-app-backend) — Deployment + Service in sdd-apps.
 # Applied on the control plane via SSM Run Command (same pattern as apply_mysql).
-# Public image (nginx:alpine) — no secrets, so the manifest is base64-encoded
-# directly (no %%TOKEN%% replace chain).
+# 012-ecr-image-deploy: the manifest's %%BACKEND_IMAGE%% / %%BACKEND_PULL_SECRET%%
+# placeholders are substituted before base64 (locals above). When a tag is set, the
+# SSM command first refreshes ecr-pull-secret with a fresh ECR token (12h expiry,
+# refresh-on-deploy), then applies the manifest and waits for the rollout.
 resource "null_resource" "apply_app_backend" {
   depends_on = [null_resource.apply_mysql]
 
   triggers = {
-    backend_image = "nginx:alpine"
+    backend_image = local.backend_image                            # 012: re-apply on image tag change
     instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
 
@@ -471,10 +473,11 @@ resource "null_resource" "apply_app_backend" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"echo '${base64encode(file("${path.module}/manifests/app-backend.yaml"))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
+          \"echo '${base64encode(replace(file("${path.module}/scripts/create-ecr-pull-secret.sh"), "%%ECR_REGISTRY%%", module.ecr.repository_urls["sdd-k8s-platform/frontend"]))}' | base64 -d | bash\",
+          \"echo '${base64encode(replace(replace(file("${path.module}/manifests/app-backend.yaml"), "%%BACKEND_IMAGE%%", local.backend_image), "%%BACKEND_PULL_SECRET%%", local.backend_pull_secret))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-backend -n sdd-apps --timeout=180s\"
         ]" \
         --timeout-seconds 600 \
-        --comment "Apply app-backend Deployment + Service (006)" \
+        --comment "Apply app-backend Deployment + Service (006/012)" \
         --query 'Command.CommandId' --output text)
       for i in $(seq 1 60); do
         STATUS=$(aws ssm get-command-invocation \
@@ -501,6 +504,9 @@ resource "null_resource" "apply_app_backend" {
 # Ingress in sdd-apps. Applied on the control plane via SSM Run Command (same pattern
 # as apply_app_backend). The manifest's %%INGRESS_HOST%% token is replaced with
 # var.ingress_host before base64 (005 replace pattern, applied to a non-secret).
+# 012-ecr-image-deploy: %%FRONTEND_IMAGE%% / %%FRONTEND_PULL_SECRET%% are substituted
+# before base64 (locals above). When a tag is set, the SSM command first refreshes
+# ecr-pull-secret with a fresh ECR token, then applies and waits for the rollout.
 resource "null_resource" "apply_app_frontend_ingress" {
   # 009: the Ingress now carries a tls block + a cert-manager Certificate (letsencrypt-prod
   # HTTP-01). It needs the issuers to exist (apply_cert_manager). It does NOT depend on
@@ -510,7 +516,7 @@ resource "null_resource" "apply_app_frontend_ingress" {
   depends_on = [null_resource.apply_app_backend, null_resource.apply_cert_manager]
 
   triggers = {
-    frontend_image = "nginx:alpine"
+    frontend_image = local.frontend_image # 012: re-apply on image tag change
     ingress_host   = var.ingress_host
     instance_id    = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
   }
@@ -555,10 +561,10 @@ resource "null_resource" "apply_app_frontend_ingress" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s && echo '${base64encode(replace(file("${path.module}/manifests/app-frontend-ingress.yaml"), "%%INGRESS_HOST%%", var.ingress_host))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f -\"
+          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s && echo '${base64encode(replace(replace(replace(file("${path.module}/manifests/app-frontend-ingress.yaml"), "%%INGRESS_HOST%%", var.ingress_host), "%%FRONTEND_IMAGE%%", local.frontend_image), "%%FRONTEND_PULL_SECRET%%", local.frontend_pull_secret))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-frontend -n sdd-apps --timeout=180s\"
         ]" \
         --timeout-seconds 600 \
-        --comment "Apply app-frontend Deployment + Service + Ingress (007)" \
+        --comment "Apply app-frontend Deployment + Service + Ingress (007/012)" \
         --query 'Command.CommandId' --output text)
       for i in $(seq 1 60); do
         STATUS=$(aws ssm get-command-invocation \
@@ -586,13 +592,28 @@ resource "null_resource" "apply_app_frontend_ingress" {
 # mints a fresh ECR token on the control plane (node role has
 # AmazonEC2ContainerRegistryReadOnly -> ecr:GetAuthorizationToken). The ECR token is
 # valid ~12h: re-apply (or re-run the script) to refresh.
+locals {
+  # 012-ecr-image-deploy: empty tag -> public baseline image, no imagePullSecrets;
+  # non-empty tag -> ECR image + ecr-pull-secret block (injected into the manifests
+  # via single-occurrence %%...%% placeholders, 014 gotcha).
+  backend_image        = var.backend_image_tag == "" ? "nginx:alpine" : "${module.ecr.repository_urls["sdd-k8s-platform/backend"]}:${var.backend_image_tag}"
+  frontend_image       = var.frontend_image_tag == "" ? "nginx:alpine" : "${module.ecr.repository_urls["sdd-k8s-platform/frontend"]}:${var.frontend_image_tag}"
+  backend_pull_secret  = var.backend_image_tag == "" ? "" : "      imagePullSecrets:\n        - name: ecr-pull-secret"
+  frontend_pull_secret = var.frontend_image_tag == "" ? "" : "      imagePullSecrets:\n        - name: ecr-pull-secret"
+}
+
+# ECR pull secret (011-ecr-pull-secret) — dockerconfigjson in sdd-apps so kubelet can
+# pull from ECR (kubelet does NOT use the node IAM role for image pulls). The script
+# mints a fresh ECR token on the control plane (node role has
+# AmazonEC2ContainerRegistryReadOnly -> ecr:GetAuthorizationToken). The ECR token is
+# valid ~12h: re-apply (or re-run the script) to refresh.
 resource "null_resource" "apply_ecr_pull_secret" {
   depends_on = [null_resource.apply_app_infrastructure] # creates the sdd-apps namespace (004)
 
   triggers = {
     ecr_repo_url = module.ecr.repository_urls["sdd-k8s-platform/frontend"] # 010
     instance_id  = module.control_plane.control_plane_instance_id          # 004-10: re-apply on cluster recreation
-    script_rev   = "014-guard-fix" # 014: force re-run with the fixed guard
+    script_rev   = "014-guard-fix"                                         # 014: force re-run with the fixed guard
   }
 
   provisioner "local-exec" {

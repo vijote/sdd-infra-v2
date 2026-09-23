@@ -26,3 +26,15 @@ variable "ingress_host" {
   description = "Ingress host (Route53 domain)"
   default     = "demo.vijote.dev"
 }
+
+variable "backend_image_tag" {
+  type        = string
+  description = "Backend image tag (git SHA). Empty = keep public baseline image."
+  default     = ""
+}
+
+variable "frontend_image_tag" {
+  type        = string
+  description = "Frontend image tag (git SHA). Empty = keep public baseline image."
+  default     = ""
+}

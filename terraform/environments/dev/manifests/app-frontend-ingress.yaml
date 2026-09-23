@@ -1,6 +1,8 @@
 # Application frontend + Ingress (007-app-frontend-ingress) — sdd-apps namespace.
-# Public image (nginx:alpine) pulled via NAT egress — no imagePullSecrets.
+# Image is substituted by Terraform (012): empty frontend_image_tag -> public baseline
+# (nginx:alpine, no imagePullSecrets); non-empty -> ECR image + ecr-pull-secret.
 # %%INGRESS_HOST%% is replaced by Terraform (var.ingress_host) before base64.
+# Each %%...%% placeholder appears exactly once (014 gotcha: replace() hits all occurrences).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,7 +22,7 @@ spec:
     spec:
       containers:
         - name: app-frontend
-          image: nginx:alpine
+          image: %%FRONTEND_IMAGE%%
           ports:
             - containerPort: 80
               name: http
@@ -43,6 +45,7 @@ spec:
               memory: 64Mi
             limits:
               memory: 128Mi
+%%FRONTEND_PULL_SECRET%%
 ---
 apiVersion: v1
 kind: Service
