@@ -6,6 +6,11 @@ set -euo pipefail
 
 REGISTRY="%%ECR_REGISTRY%%" # replaced by Terraform with the 010 ECR repository URL
 
+# 012-2: kubelet matches imagePullSecrets `auths` keys against the BARE registry
+# host only. The substituted value is the full repository URL — strip the repo
+# path so the secret's auths key is the registry host (012-2 server fix).
+REGISTRY="${REGISTRY%%/*}"
+
 if [ -z "$REGISTRY" ]; then
   echo "ERROR: REGISTRY is empty" >&2
   exit 1
