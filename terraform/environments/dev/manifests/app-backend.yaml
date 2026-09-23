@@ -1,6 +1,7 @@
 # Application backend scaffold (006-app-backend) — sdd-apps namespace.
-# Public image (nginx:alpine) pulled via NAT egress — no imagePullSecrets.
-# No secrets in this manifest (no %%TOKEN%% placeholders).
+# Image is substituted by Terraform (012): empty backend_image_tag -> public baseline
+# (nginx:alpine, no imagePullSecrets); non-empty -> ECR image + ecr-pull-secret.
+# Each %%...%% placeholder appears exactly once (014 gotcha: replace() hits all occurrences).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -20,7 +21,7 @@ spec:
     spec:
       containers:
         - name: app-backend
-          image: nginx:alpine
+          image: %%BACKEND_IMAGE%%
           ports:
             - containerPort: 80
               name: http
@@ -43,6 +44,7 @@ spec:
               memory: 64Mi
             limits:
               memory: 128Mi
+%%BACKEND_PULL_SECRET%%
 ---
 apiVersion: v1
 kind: Service

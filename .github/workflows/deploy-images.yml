@@ -1,0 +1,69 @@
+name: Deploy App Images
+
+# 012-ecr-image-deploy: event-driven image deploy. Dispatched by the app repos'
+# build workflows (PAT with actions:write, stored as INFRA_PAT in the app repo)
+# after a successful image push. Optional per-app tags: empty input = keep the
+# public baseline image for that app (frontend activates on its first push).
+# Applies via the standard Terraform path (OIDC role-chaining -> SSM -> control
+# plane kubectl). No validation steps (constitution §6) — user handles testing.
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_BOOTSTRAP_ROLE_ARN: ${{ vars.AWS_BOOTSTRAP_ROLE_ARN }}
+  AWS_TERRAFORM_ROLE: ${{ vars.AWS_TERRAFORM_ROLE }}
+  TF_VAR_state_bucket_name: ${{ vars.AWS_STATE_BUCKET_NAME }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      backend_image_tag:
+        description: "Backend image tag (git SHA). Empty = keep current image."
+        required: false
+        default: ""
+      frontend_image_tag:
+        description: "Frontend image tag (git SHA). Empty = keep current image."
+        required: false
+        default: ""
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ">=1.5.0"
+
+      - name: Configure AWS Bootstrap Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_BOOTSTRAP_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Assume Terraform Target Role
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_TERRAFORM_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-chaining: true
+
+      - name: Terraform Apply (image deploy)
+        run: |
+          cd terraform/environments/dev
+          terraform init \
+            -backend-config="bucket=${{ env.TF_VAR_state_bucket_name }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+          terraform apply -auto-approve
+        env:
+          TF_VAR_state_bucket_name: ${{ env.TF_VAR_state_bucket_name }}
+          TF_VAR_region: ${{ env.AWS_REGION }}
+          TF_VAR_backend_image_tag: ${{ github.event.inputs.backend_image_tag }}
+          TF_VAR_frontend_image_tag: ${{ github.event.inputs.frontend_image_tag }}
