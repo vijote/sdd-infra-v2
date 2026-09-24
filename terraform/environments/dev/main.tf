@@ -520,7 +520,7 @@ resource "null_resource" "apply_app_frontend_ingress" {
     frontend_image = local.frontend_image # 012: re-apply on image tag change
     ingress_host   = var.ingress_host
     instance_id    = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
-    manifest_rev   = "012-5-api-strip"                              # 012-5: /api prefix strip (regex + rewrite-target)
+    manifest_rev   = "012-6-annotation-placement"                   # 012-6: annotations in metadata (strict decoding fix)
   }
 
   provisioner "local-exec" {
