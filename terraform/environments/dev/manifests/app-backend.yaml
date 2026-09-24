@@ -23,19 +23,19 @@ spec:
         - name: app-backend
           image: %%BACKEND_IMAGE%%
           ports:
-            - containerPort: 8080
+            - containerPort: %%BACKEND_PORT%%
               name: http
           readinessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: %%BACKEND_PORT%%
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
           livenessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: %%BACKEND_PORT%%
             initialDelaySeconds: 10
             periodSeconds: 20
             timeoutSeconds: 3
@@ -60,4 +60,4 @@ spec:
   ports:
     - name: http
       port: 80
-      targetPort: 8080
+      targetPort: %%BACKEND_PORT%%

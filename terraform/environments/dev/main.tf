@@ -431,7 +431,7 @@ resource "null_resource" "apply_app_backend" {
   triggers = {
     backend_image = local.backend_image                            # 012: re-apply on image tag change
     instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
-    manifest_rev  = "012-3-port-8080"                              # 012-3: backend port aligned to Go app (8080)
+    manifest_rev  = "012-4-port-baseline"                          # 012-4: tag-conditional backend port (80 baseline / 8080 app)
   }
 
   provisioner "local-exec" {
@@ -475,7 +475,7 @@ resource "null_resource" "apply_app_backend" {
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
           \"echo '${base64encode(replace(file("${path.module}/scripts/create-ecr-pull-secret.sh"), "%%ECR_REGISTRY%%", module.ecr.repository_urls["sdd-k8s-platform/frontend"]))}' | base64 -d | bash\",
-          \"echo '${base64encode(replace(replace(file("${path.module}/manifests/app-backend.yaml"), "%%BACKEND_IMAGE%%", local.backend_image), "%%BACKEND_PULL_SECRET%%", local.backend_pull_secret))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-backend -n sdd-apps --timeout=180s\"
+          \"echo '${base64encode(replace(replace(replace(file("${path.module}/manifests/app-backend.yaml"), "%%BACKEND_IMAGE%%", local.backend_image), "%%BACKEND_PULL_SECRET%%", local.backend_pull_secret), "%%BACKEND_PORT%%", local.backend_port))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-backend -n sdd-apps --timeout=180s\"
         ]" \
         --timeout-seconds 600 \
         --comment "Apply app-backend Deployment + Service (006/012)" \
@@ -601,6 +601,8 @@ locals {
   frontend_image       = var.frontend_image_tag == "" ? "nginx:alpine" : "${module.ecr.repository_urls["sdd-k8s-platform/frontend"]}:${var.frontend_image_tag}"
   backend_pull_secret  = var.backend_image_tag == "" ? "" : "      imagePullSecrets:\n        - name: ecr-pull-secret"
   frontend_pull_secret = var.frontend_image_tag == "" ? "" : "      imagePullSecrets:\n        - name: ecr-pull-secret"
+  # 012-4: port is tag-conditional — nginx baseline listens on 80, the Go app on 8080
+  backend_port = var.backend_image_tag == "" ? "80" : "8080"
 }
 
 # ECR pull secret (011-ecr-pull-secret) — dockerconfigjson in sdd-apps so kubelet can
