@@ -72,6 +72,11 @@ metadata:
     app: app-frontend
 spec:
   ingressClassName: nginx
+  # 012-5: strip the /api prefix before proxying to the backend
+  # (regex capture $2 = everything after /api; frontend / rule unaffected).
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
   tls:
     - hosts:
         - %%INGRESS_HOST%%
@@ -80,8 +85,8 @@ spec:
     - host: %%INGRESS_HOST%%
       http:
         paths:
-          - path: /api
-            pathType: Prefix
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: app-backend
