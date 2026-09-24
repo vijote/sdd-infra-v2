@@ -431,6 +431,7 @@ resource "null_resource" "apply_app_backend" {
   triggers = {
     backend_image = local.backend_image                            # 012: re-apply on image tag change
     instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
+    manifest_rev  = "012-3-port-8080"                              # 012-3: backend port aligned to Go app (8080)
   }
 
   provisioner "local-exec" {
