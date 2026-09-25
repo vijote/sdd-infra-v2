@@ -1,0 +1,44 @@
+# One-shot DB schema migration Job (015-backend-db-migrate-job) — sdd-apps namespace.
+# Runs the backend image with arg `migrate` (entrypoint default with no args = serve).
+# backoffLimit 0: non-zero exit = fatal, no retries; kubectl wait --for=condition=complete
+# in apply_app_backend enforces the gate before the app-backend rollout.
+# %%MIGRATE_IMAGE%% appears exactly once (014 gotcha: replace() hits all occurrences).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: backend-db-migrate
+  namespace: sdd-apps
+  labels:
+    app: backend-db-migrate
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  activeDeadlineSeconds: 300
+  template:
+    metadata:
+      labels:
+        app: backend-db-migrate
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: %%MIGRATE_IMAGE%%
+          imagePullPolicy: IfNotPresent
+          command: ["/app/backend", "migrate"]
+          env:
+            - name: DB_HOST
+              value: mysql.sdd-apps.svc.cluster.local
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_PASSWORD
+            - name: DB_NAME
+              value: sdd_backend

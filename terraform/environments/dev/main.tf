@@ -432,6 +432,8 @@ resource "null_resource" "apply_app_backend" {
     backend_image = local.backend_image                            # 012: re-apply on image tag change
     instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
     manifest_rev  = "012-5-probe-path"                             # 012-5: tag-conditional probe path (/, /healthz)
+    migrate_rev   = "015-initial"                                  # 015: migrate Job + DB bootstrap (re-run on change)
+    probe_rev     = "015-readyz"                                   # 015: split probes (liveness /healthz, readiness /readyz)
   }
 
   provisioner "local-exec" {
@@ -475,7 +477,8 @@ resource "null_resource" "apply_app_backend" {
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
           \"echo '${base64encode(replace(file("${path.module}/scripts/create-ecr-pull-secret.sh"), "%%ECR_REGISTRY%%", module.ecr.repository_urls["sdd-k8s-platform/frontend"]))}' | base64 -d | bash\",
-          \"echo '${base64encode(replace(replace(replace(replace(file("${path.module}/manifests/app-backend.yaml"), "%%BACKEND_IMAGE%%", local.backend_image), "%%BACKEND_PULL_SECRET%%", local.backend_pull_secret), "%%BACKEND_PORT%%", local.backend_port), "%%BACKEND_PROBE_PATH%%", local.backend_probe_path))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-backend -n sdd-apps --timeout=180s\"
+          \"if [ '${local.backend_migrate_enabled}' = 'true' ]; then echo '${base64encode("kubectl exec mysql-0 -n sdd-apps -- sh -c 'mysql -uroot -p\\\"$MYSQL_ROOT_PASSWORD\\\" -e \\\"CREATE DATABASE IF NOT EXISTS sdd_backend; GRANT ALL PRIVILEGES ON sdd_backend.* TO 'sdd_app'@'%'; FLUSH PRIVILEGES;\\\"'")}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf bash -e && echo '${base64encode(replace(file("${path.module}/manifests/backend-db-migrate.yaml"), "%%MIGRATE_IMAGE%%", local.backend_image))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=complete job/backend-db-migrate -n sdd-apps --timeout=300s; fi\",
+          \"echo '${base64encode(replace(replace(replace(replace(replace(file("${path.module}/manifests/app-backend.yaml"), "%%BACKEND_IMAGE%%", local.backend_image), "%%BACKEND_PULL_SECRET%%", local.backend_pull_secret), "%%BACKEND_PORT%%", local.backend_port), "%%BACKEND_LIVENESS_PATH%%", local.backend_liveness_path), "%%BACKEND_READINESS_PATH%%", local.backend_readiness_path))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-backend -n sdd-apps --timeout=180s\"
         ]" \
         --timeout-seconds 600 \
         --comment "Apply app-backend Deployment + Service (006/012)" \
@@ -607,6 +610,13 @@ locals {
   # 012-5: probe path is tag-conditional — nginx baseline serves /, the Go app
   # exposes /healthz (012-5 contract: backend must implement GET /healthz -> 200)
   backend_probe_path = var.backend_image_tag == "" ? "/" : "/healthz"
+  # 015: split probes — liveness /healthz (no DB), readiness /readyz (DB ping,
+  # 503 removes pod from endpoints); nginx baseline keeps / for both.
+  backend_liveness_path  = var.backend_image_tag == "" ? "/" : "/healthz"
+  backend_readiness_path = var.backend_image_tag == "" ? "/" : "/readyz"
+  # 015: migrate Job + DB bootstrap only apply when the real Go app is deployed
+  # (nginx:alpine baseline has no migrate entrypoint arg and no DB dependency).
+  backend_migrate_enabled = var.backend_image_tag != ""
 }
 
 # ECR pull secret (011-ecr-pull-secret) — dockerconfigjson in sdd-apps so kubelet can

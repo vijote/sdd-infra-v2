@@ -27,14 +27,14 @@ spec:
               name: http
           readinessProbe:
             httpGet:
-              path: %%BACKEND_PROBE_PATH%%
+              path: %%BACKEND_READINESS_PATH%%
               port: %%BACKEND_PORT%%
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 3
           livenessProbe:
             httpGet:
-              path: %%BACKEND_PROBE_PATH%%
+              path: %%BACKEND_LIVENESS_PATH%%
               port: %%BACKEND_PORT%%
             initialDelaySeconds: 10
             periodSeconds: 20
