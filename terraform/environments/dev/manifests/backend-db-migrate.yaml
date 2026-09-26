@@ -20,11 +20,13 @@ spec:
         app: backend-db-migrate
     spec:
       restartPolicy: Never
+      imagePullSecrets:
+        - name: ecr-pull-secret
       containers:
         - name: migrate
           image: %%MIGRATE_IMAGE%%
           imagePullPolicy: IfNotPresent
-          command: ["migrate"]
+          args: ["migrate"]
           env:
             - name: DB_HOST
               value: mysql.sdd-apps.svc.cluster.local
