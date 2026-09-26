@@ -431,7 +431,7 @@ resource "null_resource" "apply_app_backend" {
   triggers = {
     backend_image = local.backend_image                            # 012: re-apply on image tag change
     instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
-    manifest_rev  = "012-5-probe-path"                             # 012-5: tag-conditional probe path (/, /healthz)
+    manifest_rev  = "015-9-db-env"                                 # 015-9: DB env on Deployment (new backend requires it)
     migrate_rev   = "015-8-delete-outside-pipeline"                # 015-8: delete standalone before pipeline (stdin discipline)
     probe_rev     = "015-readyz"                                   # 015: split probes (liveness /healthz, readiness /readyz)
   }
