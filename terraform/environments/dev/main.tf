@@ -432,7 +432,7 @@ resource "null_resource" "apply_app_backend" {
     backend_image = local.backend_image                            # 012: re-apply on image tag change
     instance_id   = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
     manifest_rev  = "012-5-probe-path"                             # 012-5: tag-conditional probe path (/, /healthz)
-    migrate_rev   = "015-4-password-escape-fix"                    # 015-4: payload -p"$VAR" escape fix
+    migrate_rev   = "015-5-entrypoint-arg"                         # 015-5: entrypoint arg only (no /app/backend path)
     probe_rev     = "015-readyz"                                   # 015: split probes (liveness /healthz, readiness /readyz)
   }
 
