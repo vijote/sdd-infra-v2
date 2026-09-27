@@ -29,12 +29,12 @@ variable "ingress_host" {
 
 variable "backend_image_tag" {
   type        = string
-  description = "Backend image tag (git SHA). Empty = keep public baseline image."
+  description = "Backend image tag (git SHA). Empty = skip backend Deployment apply, keep current in-cluster image (015-10)."
   default     = ""
 }
 
 variable "frontend_image_tag" {
   type        = string
-  description = "Frontend image tag (git SHA). Empty = keep public baseline image."
+  description = "Frontend image tag (git SHA). Empty = skip frontend Deployment apply, keep current in-cluster image (015-10)."
   default     = ""
 }

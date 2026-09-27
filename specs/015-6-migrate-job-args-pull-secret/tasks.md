@@ -15,5 +15,5 @@
 
 ## Stage 2: Acceptance Validation (user-managed)
 
-- [ ] T004 [Stage 2: Validation] CI apply re-runs `apply_app_backend`; migrate Job reaches `Completed` (Depends on T003) — verifies AC-006
-- [ ] T005 [Stage 2: Validation] Deployment rollout succeeds after Job completion (Depends on T004) — verifies AC-006
+- [x] T004 [Stage 2: Validation] CI apply re-runs `apply_app_backend`; migrate Job reaches `Completed` (Depends on T003) — verifies AC-006
+- [x] T005 [Stage 2: Validation] Deployment rollout succeeds after Job completion (Depends on T004) — verifies AC-006

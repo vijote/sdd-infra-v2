@@ -1,0 +1,50 @@
+# Application frontend Deployment (007-app-frontend-ingress) — sdd-apps namespace.
+# Split from app-frontend-ingress.yaml (015-10): Deployment applies ONLY when
+# frontend_image_tag is set (count-gated null_resource); empty tag = keep current
+# in-cluster image (no baseline rollback). Service + Ingress live in
+# app-frontend-ingress.yaml (always applied).
+# Image is substituted by Terraform (012): ECR image + ecr-pull-secret.
+# Each %%...%% placeholder appears exactly once (014 gotcha: replace() hits all occurrences).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-frontend
+  namespace: sdd-apps
+  labels:
+    app: app-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app-frontend
+  template:
+    metadata:
+      labels:
+        app: app-frontend
+    spec:
+      containers:
+        - name: app-frontend
+          image: %%FRONTEND_IMAGE%%
+          ports:
+            - containerPort: 80
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+%%FRONTEND_PULL_SECRET%%

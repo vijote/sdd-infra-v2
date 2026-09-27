@@ -426,6 +426,11 @@ resource "null_resource" "apply_mysql" {
 # SSM command first refreshes ecr-pull-secret with a fresh ECR token (12h expiry,
 # refresh-on-deploy), then applies the manifest and waits for the rollout.
 resource "null_resource" "apply_app_backend" {
+  # 015-10: applies ONLY when backend_image_tag is set — empty tag = keep the
+  # current in-cluster Deployment image (no baseline rollback). The backend
+  # Service lives in apply_app_services_ingress (always applied).
+  count = var.backend_image_tag == "" ? 0 : 1
+
   depends_on = [null_resource.apply_mysql]
 
   triggers = {
@@ -476,7 +481,7 @@ resource "null_resource" "apply_app_backend" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"echo '${base64encode(replace(file("${path.module}/scripts/create-ecr-pull-secret.sh"), "%%ECR_REGISTRY%%", module.ecr.repository_urls["sdd-k8s-platform/frontend"]))}' | base64 -d | bash && if [ '${local.backend_migrate_enabled}' = 'true' ]; then echo '${base64encode("mysql -uroot -p\"$MYSQL_ROOT_PASSWORD\" <<'SQL'\nCREATE DATABASE IF NOT EXISTS sdd_backend;\nGRANT ALL PRIVILEGES ON sdd_backend.* TO 'sdd_app'@'%';\nFLUSH PRIVILEGES;\nSQL")}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl exec -i mysql-0 -n sdd-apps -- bash -s && KUBECONFIG=/etc/kubernetes/admin.conf kubectl delete job backend-db-migrate -n sdd-apps --ignore-not-found && echo '${base64encode(replace(file("${path.module}/manifests/backend-db-migrate.yaml"), "%%MIGRATE_IMAGE%%", local.backend_image))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=complete job/backend-db-migrate -n sdd-apps --timeout=300s; fi && echo '${base64encode(replace(replace(replace(replace(replace(file("${path.module}/manifests/app-backend.yaml"), "%%BACKEND_IMAGE%%", local.backend_image), "%%BACKEND_PULL_SECRET%%", local.backend_pull_secret), "%%BACKEND_PORT%%", local.backend_port), "%%BACKEND_LIVENESS_PATH%%", local.backend_liveness_path), "%%BACKEND_READINESS_PATH%%", local.backend_readiness_path))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-backend -n sdd-apps --timeout=180s\"
+          \"echo '${base64encode(replace(file("${path.module}/scripts/create-ecr-pull-secret.sh"), "%%ECR_REGISTRY%%", module.ecr.repository_urls["sdd-k8s-platform/frontend"]))}' | base64 -d | bash && echo '${base64encode("mysql -uroot -p\"$MYSQL_ROOT_PASSWORD\" <<'SQL'\nCREATE DATABASE IF NOT EXISTS sdd_backend;\nGRANT ALL PRIVILEGES ON sdd_backend.* TO 'sdd_app'@'%';\nFLUSH PRIVILEGES;\nSQL")}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl exec -i mysql-0 -n sdd-apps -- bash -s && KUBECONFIG=/etc/kubernetes/admin.conf kubectl delete job backend-db-migrate -n sdd-apps --ignore-not-found && echo '${base64encode(replace(file("${path.module}/manifests/backend-db-migrate.yaml"), "%%MIGRATE_IMAGE%%", local.backend_image))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl wait --for=condition=complete job/backend-db-migrate -n sdd-apps --timeout=300s && echo '${base64encode(replace(replace(replace(replace(replace(file("${path.module}/manifests/app-backend.yaml"), "%%BACKEND_IMAGE%%", local.backend_image), "%%BACKEND_PULL_SECRET%%", local.backend_pull_secret), "%%BACKEND_PORT%%", local.backend_port), "%%BACKEND_LIVENESS_PATH%%", local.backend_liveness_path), "%%BACKEND_READINESS_PATH%%", local.backend_readiness_path))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-backend -n sdd-apps --timeout=180s\"
         ]" \
         --timeout-seconds 600 \
         --comment "Apply app-backend Deployment + Service (006/012)" \
@@ -510,18 +515,23 @@ resource "null_resource" "apply_app_backend" {
 # before base64 (locals above). When a tag is set, the SSM command first refreshes
 # ecr-pull-secret with a fresh ECR token, then applies and waits for the rollout.
 resource "null_resource" "apply_app_frontend_ingress" {
-  # 009: the Ingress now carries a tls block + a cert-manager Certificate (letsencrypt-prod
-  # HTTP-01). It needs the issuers to exist (apply_cert_manager). It does NOT depend on
-  # apply_cloudflare_record — that would be a cycle (cloudflare_record -> apply_aws_ccm -> this
-  # resource). The Certificate stays in "Issuing" until DNS is live; cert-manager retries
-  # HTTP-01 automatically, so it self-heals once the CNAME record propagates.
+  # 015-10: applies the frontend Deployment ONLY when frontend_image_tag is set —
+  # empty tag = keep the current in-cluster image (no baseline rollback). The
+  # frontend Service + Ingress + Certificate live in apply_app_services_ingress
+  # (always applied).
+  # 009: the Ingress needs the issuers to exist (apply_cert_manager). It does NOT
+  # depend on apply_cloudflare_record — that would be a cycle (cloudflare_record ->
+  # apply_aws_ccm -> this resource). The Certificate stays in "Issuing" until DNS is
+  # live; cert-manager retries HTTP-01 automatically, so it self-heals once the CNAME
+  # record propagates.
+  count = var.frontend_image_tag == "" ? 0 : 1
+
   depends_on = [null_resource.apply_app_backend, null_resource.apply_cert_manager]
 
   triggers = {
-    frontend_image = local.frontend_image # 012: re-apply on image tag change
-    ingress_host   = var.ingress_host
+    frontend_image = local.frontend_image                           # 012: re-apply on image tag change
     instance_id    = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
-    manifest_rev   = "012-6-annotation-placement"                   # 012-6: annotations in metadata (strict decoding fix)
+    manifest_rev   = "015-10-deployment-split"                      # 015-10: Deployment-only manifest
   }
 
   provisioner "local-exec" {
@@ -564,7 +574,7 @@ resource "null_resource" "apply_app_frontend_ingress" {
         --instance-ids "$${INSTANCE_ID}" \
         --document-name "AWS-RunShellScript" \
         --parameters "commands=[
-          \"KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s && echo '${base64encode(replace(replace(replace(file("${path.module}/manifests/app-frontend-ingress.yaml"), "%%INGRESS_HOST%%", var.ingress_host), "%%FRONTEND_IMAGE%%", local.frontend_image), "%%FRONTEND_PULL_SECRET%%", local.frontend_pull_secret))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-frontend -n sdd-apps --timeout=180s\"
+          \"echo '${base64encode(replace(file("${path.module}/scripts/create-ecr-pull-secret.sh"), "%%ECR_REGISTRY%%", module.ecr.repository_urls["sdd-k8s-platform/frontend"]))}' | base64 -d | bash && echo '${base64encode(replace(replace(file("${path.module}/manifests/app-frontend.yaml"), "%%FRONTEND_IMAGE%%", local.frontend_image), "%%FRONTEND_PULL_SECRET%%", local.frontend_pull_secret))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/app-frontend -n sdd-apps --timeout=180s\"
         ]" \
         --timeout-seconds 600 \
         --comment "Apply app-frontend Deployment + Service + Ingress (007/012)" \
@@ -590,31 +600,109 @@ resource "null_resource" "apply_app_frontend_ingress" {
   }
 }
 
+# Application Services + Ingress + Certificate (015-10) — ALWAYS applied (count = 1)
+# on every terraform apply so fresh cluster recreations stay complete regardless of
+# image tags: backend Service (app-backend-service.yaml) + frontend Service + Ingress
+# + Certificate (app-frontend-ingress.yaml). The Deployments live in the count-gated
+# apply_app_backend / apply_app_frontend_ingress resources above.
+resource "null_resource" "apply_app_services_ingress" {
+  # 009: the Ingress needs the issuers to exist (apply_cert_manager). It does NOT
+  # depend on apply_cloudflare_record — that would be a cycle (cloudflare_record ->
+  # apply_aws_ccm -> this resource).
+  depends_on = [null_resource.apply_cert_manager]
+
+  triggers = {
+    ingress_host = var.ingress_host
+    instance_id  = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
+    manifest_rev = "015-10-services-split"                        # 015-10: Service/Ingress-only manifests
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+    command     = <<-EOT
+      set -euo pipefail
+      INSTANCE_ID="${module.control_plane.control_plane_instance_id}"
+      # Wait for the control plane's SSM agent to register (same as apply_app_backend).
+      for i in $(seq 1 30); do
+        SSM_ID=$(aws ssm describe-instance-information \
+          --filters "Key=InstanceIds,Values=$${INSTANCE_ID}" \
+          --query 'InstanceInformationList[0].InstanceId' --output text 2>/dev/null) || SSM_ID="Pending"
+        if [ "$${SSM_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "SSM agent registered for $${INSTANCE_ID}"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${SSM_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "SSM agent did not register for $${INSTANCE_ID} within timeout" >&2
+        exit 1
+      fi
+      # Wait for bootstrap completion (003-11 per-run signal): the bootstrap-instance-id
+      # parameter must equal THIS control plane's instance ID.
+      for i in $(seq 1 60); do
+        BOOTSTRAP_ID=$(aws ssm get-parameter \
+          --name "/sdd-k8s-platform/kubeadm-bootstrap-instance-id" \
+          --query 'Parameter.Value' --output text 2>/dev/null) || BOOTSTRAP_ID=""
+        if [ "$${BOOTSTRAP_ID}" = "$${INSTANCE_ID}" ]; then
+          echo "Control plane bootstrap complete (instance-id signal matches $${INSTANCE_ID})"
+          break
+        fi
+        sleep 10
+      done
+      if [ "$${BOOTSTRAP_ID}" != "$${INSTANCE_ID}" ]; then
+        echo "Control plane bootstrap did not complete within timeout" >&2
+        exit 1
+      fi
+      CMD_ID=$(aws ssm send-command \
+        --instance-ids "$${INSTANCE_ID}" \
+        --document-name "AWS-RunShellScript" \
+        --parameters "commands=[
+          \"echo '${base64encode(replace(file("${path.module}/manifests/app-backend-service.yaml"), "%%INGRESS_HOST%%", var.ingress_host))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && echo '${base64encode(replace(file("${path.module}/manifests/app-frontend-ingress.yaml"), "%%INGRESS_HOST%%", var.ingress_host))}' | base64 -d | KUBECONFIG=/etc/kubernetes/admin.conf kubectl apply -f - && KUBECONFIG=/etc/kubernetes/admin.conf kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=300s\"
+        ]" \
+        --timeout-seconds 600 \
+        --comment "Apply app Services + Ingress + Certificate (015-10)" \
+        --query 'Command.CommandId' --output text)
+      for i in $(seq 1 60); do
+        STATUS=$(aws ssm get-command-invocation \
+          --instance-id "$${INSTANCE_ID}" \
+          --command-id "$${CMD_ID}" \
+          --query 'CommandInvocation.Status || Status' --output text 2>/dev/null) || STATUS="Pending"
+        if [ "$${STATUS}" = "Success" ]; then
+          echo "App Services + Ingress applied successfully"
+          exit 0
+        fi
+        if [ "$${STATUS}" = "Failed" ] || [ "$${STATUS}" = "TimedOut" ] || [ "$${STATUS}" = "Cancelled" ]; then
+          echo "App Services + Ingress apply failed with status $${STATUS}" >&2
+          exit 1
+        fi
+        sleep 10
+      done
+      echo "App Services + Ingress apply timed out waiting for invocation" >&2
+      exit 1
+    EOT
+  }
+}
+
 # ECR pull secret (011-ecr-pull-secret) — dockerconfigjson in sdd-apps so kubelet can
 # pull from ECR (kubelet does NOT use the node IAM role for image pulls). The script
 # mints a fresh ECR token on the control plane (node role has
 # AmazonEC2ContainerRegistryReadOnly -> ecr:GetAuthorizationToken). The ECR token is
 # valid ~12h: re-apply (or re-run the script) to refresh.
 locals {
-  # 012-ecr-image-deploy: empty tag -> public baseline image, no imagePullSecrets;
-  # non-empty tag -> ECR image + ecr-pull-secret block (injected into the manifests
-  # via single-occurrence %%...%% placeholders, 014 gotcha).
-  backend_image        = var.backend_image_tag == "" ? "nginx:alpine" : "${module.ecr.repository_urls["sdd-k8s-platform/backend"]}:${var.backend_image_tag}"
-  frontend_image       = var.frontend_image_tag == "" ? "nginx:alpine" : "${module.ecr.repository_urls["sdd-k8s-platform/frontend"]}:${var.frontend_image_tag}"
-  backend_pull_secret  = var.backend_image_tag == "" ? "" : "      imagePullSecrets:\n        - name: ecr-pull-secret"
-  frontend_pull_secret = var.frontend_image_tag == "" ? "" : "      imagePullSecrets:\n        - name: ecr-pull-secret"
-  # 012-4: port is tag-conditional — nginx baseline listens on 80, the Go app on 8080
-  backend_port = var.backend_image_tag == "" ? "80" : "8080"
-  # 012-5: probe path is tag-conditional — nginx baseline serves /, the Go app
-  # exposes /healthz (012-5 contract: backend must implement GET /healthz -> 200)
-  backend_probe_path = var.backend_image_tag == "" ? "/" : "/healthz"
+  # 015-10: Deployment manifests render ONLY when their tag is set (count-gated
+  # null_resources) — empty tag = keep current in-cluster image, no baseline
+  # rollback. So image/pull-secret/port/probe locals are unconditional ECR/Go-app
+  # values (injected via single-occurrence %%...%% placeholders, 014 gotcha).
+  backend_image        = "${module.ecr.repository_urls["sdd-k8s-platform/backend"]}:${var.backend_image_tag}"
+  frontend_image       = "${module.ecr.repository_urls["sdd-k8s-platform/frontend"]}:${var.frontend_image_tag}"
+  backend_pull_secret  = "      imagePullSecrets:\n        - name: ecr-pull-secret"
+  frontend_pull_secret = "      imagePullSecrets:\n        - name: ecr-pull-secret"
+  # 012-4: the Go app listens on 8080
+  backend_port = "8080"
   # 015: split probes — liveness /healthz (no DB), readiness /readyz (DB ping,
-  # 503 removes pod from endpoints); nginx baseline keeps / for both.
-  backend_liveness_path  = var.backend_image_tag == "" ? "/" : "/healthz"
-  backend_readiness_path = var.backend_image_tag == "" ? "/" : "/readyz"
-  # 015: migrate Job + DB bootstrap only apply when the real Go app is deployed
-  # (nginx:alpine baseline has no migrate entrypoint arg and no DB dependency).
-  backend_migrate_enabled = var.backend_image_tag != ""
+  # 503 removes pod from endpoints).
+  backend_liveness_path  = "/healthz"
+  backend_readiness_path = "/readyz"
 }
 
 # ECR pull secret (011-ecr-pull-secret) — dockerconfigjson in sdd-apps so kubelet can
@@ -712,7 +800,9 @@ resource "null_resource" "apply_ecr_pull_secret" {
 # init/join time for future recreations; this patches the CURRENT cluster's
 # nodes without a terraform destroy.
 resource "null_resource" "set_node_provider_ids" {
-  depends_on = [null_resource.apply_app_frontend_ingress]
+  # 015-10: depends on the always-applied services/ingress resource (the count-gated
+  # frontend resource may have zero instances when frontend_image_tag is empty).
+  depends_on = [null_resource.apply_app_services_ingress]
 
   triggers = {
     provider_id_ref = "1"
@@ -790,7 +880,9 @@ resource "null_resource" "apply_aws_ccm" {
   # "AWS cloud failed to find ClusterID".
   # set_node_provider_ids: nodes must have spec.providerID BEFORE the CCM starts,
   # or it cannot register ELB targets (004-11).
-  depends_on = [null_resource.apply_app_frontend_ingress, null_resource.set_node_provider_ids, module.vpc]
+  # 015-10: depends on the always-applied services/ingress resource (the count-gated
+  # frontend resource may have zero instances when frontend_image_tag is empty).
+  depends_on = [null_resource.apply_app_services_ingress, null_resource.set_node_provider_ids, module.vpc]
 
   triggers = {
     ccm_version   = "eks-distro-v1.28.11-eks-1-28-64+vpctag"

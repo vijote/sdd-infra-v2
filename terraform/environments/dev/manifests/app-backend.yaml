@@ -1,6 +1,8 @@
-# Application backend scaffold (006-app-backend) — sdd-apps namespace.
-# Image is substituted by Terraform (012): empty backend_image_tag -> public baseline
-# (nginx:alpine, no imagePullSecrets); non-empty -> ECR image + ecr-pull-secret.
+# Application backend Deployment (006-app-backend) — sdd-apps namespace.
+# Split (015-10): the backend Service moved to app-backend-service.yaml (always
+# applied); this Deployment applies ONLY when backend_image_tag is set
+# (count-gated null_resource) — empty tag = keep current in-cluster image.
+# Image is substituted by Terraform (012): ECR image + ecr-pull-secret.
 # Each %%...%% placeholder appears exactly once (014 gotcha: replace() hits all occurrences).
 apiVersion: apps/v1
 kind: Deployment
@@ -62,19 +64,3 @@ spec:
             limits:
               memory: 128Mi
 %%BACKEND_PULL_SECRET%%
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: app-backend
-  namespace: sdd-apps
-  labels:
-    app: app-backend
-spec:
-  type: ClusterIP
-  selector:
-    app: app-backend
-  ports:
-    - name: http
-      port: 80
-      targetPort: %%BACKEND_PORT%%

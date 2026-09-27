@@ -1,0 +1,20 @@
+# Application backend Service (006-app-backend) — sdd-apps namespace.
+# Split from app-backend.yaml (015-10): applied on EVERY terraform apply
+# (always-applied null_resource) so fresh cluster recreations stay complete
+# regardless of image tags. The backend Deployment lives in app-backend.yaml
+# (count-gated on backend_image_tag).
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-backend
+  namespace: sdd-apps
+  labels:
+    app: app-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: app-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

@@ -1,26 +1,26 @@
 # Current Session State
 
 **Current Spec:**
-`specs/014-ecr-pull-secret-guard-fix` (per `feature.json`) — COMPLETE: implemented, committed (`c5ae2ec`), applied in CI, verified (AC-001..AC-005 all pass). No active bug.
+`specs/015-10-empty-tag-skip-apply` (implemented locally; NOT yet committed/pushed — awaiting user instruction)
 
 **Objective:**
-Fix the 011 `ecr-pull-secret` creation failure so the cluster can pull images from ECR.
+Empty image tag must SKIP the app's Deployment apply instead of rolling it back to baseline nginx:alpine.
 
 **Context (Why):**
-011's apply failed in CI with `ERROR: REGISTRY not substituted`. 013's diagnostic (manual-dispatch `terraform output` workflow) refuted the empty-state hypothesis — both ECR URL outputs are real URLs in state. Root cause: the SSM script's guard was self-defeating — Terraform's `replace()` substitutes ALL `%%ECR_REGISTRY%%` occurrences, including the one inside the guard's own comparison, so after substitution the guard read `[ "$REGISTRY" = "<real URL>" ]` (always true) → always `exit 1`. Fix (014): guard is now `if [ -z "$REGISTRY" ]; then` (only one placeholder occurrence left, line 7) + `script_rev = "014-guard-fix"` trigger bump to force one re-run. Verified: `kubectl get secret ecr-pull-secret -n sdd-apps` → type `kubernetes.io/dockerconfigjson`, `.auths` key = `891377205721.dkr.ecr.us-east-1.amazonaws.com/sdd-k8s-platform/frontend`, username `AWS`.
+Backend repo dispatches `deploy-images.yml` with only `backend_image_tag`; `frontend_image_tag` defaults to `""`, and Terraform's old semantics treated empty as "use baseline nginx:alpine" — rolling the user's deployed frontend back to stock nginx on every backend deploy. Fix (015-10): count-gate both Deployment null_resources on non-empty tag; split Deployment manifests from Service/Ingress manifests; NEW always-applied `apply_app_services_ingress` applies backend Service + frontend Service/Ingress/Certificate on every apply (fresh-cluster completeness).
 
 **Modified/Uncommitted Files:**
-- None (working tree clean; only pre-existing untracked: `.DS_Store`, `terraform/environments/dev/.terraform.lock.hcl`)
-
-**Committed (branch `cleanup`, pushed to `origin/cleanup`):**
-- `862bb2c` 010: ECR repos module + outputs
-- `a7d073f` 011: `apply_ecr_pull_secret` null_resource + script (the buggy guard)
-- `5bdbefc` 013: `terraform-output-diag.yml` (manual-dispatch diagnostic) + spec
-- `c5ae2ec` 014: guard fix + trigger bump + spec
+- `terraform/environments/dev/main.tf` (count-gating, locals cleanup, new services/ingress resource, depends_on rewiring)
+- `terraform/environments/dev/variables.tf` (descriptions)
+- `terraform/environments/dev/manifests/app-backend.yaml` (Deployment only)
+- `terraform/environments/dev/manifests/app-frontend-ingress.yaml` (Service+Ingress only)
+- NEW: `manifests/app-backend-service.yaml`, `manifests/app-frontend.yaml`
+- NEW: `specs/015-10-empty-tag-skip-apply/` (spec, plan, tasks, checklist)
+- `.coda/MEMORY.md`, `.coda/STATE.md`, `specs/015-6-.../tasks.md` (from earlier)
 
 **Blockers/Unresolved Bugs:**
-- None.
+- None known. `terraform fmt -check -recursive` + `terraform validate` pass.
 
 **Next Immediate Steps:**
-- **Spec 012** (manifest image swap: public baseline → ECR images + `imagePullSecrets: [ecr-pull-secret]` in `app-backend.yaml` / `app-frontend-ingress.yaml`) — ready to specify whenever the first real push from the app repos lands (or earlier if the user wants to push a test image).
-- Optional cleanup: the 013 diagnostic workflow (`terraform-output-diag.yml`) has served its purpose; can be removed in a small follow-on spec if desired.
+- Commit + push (user instruction), let CI apply, then validate: backend-only dispatch must NOT change `app-frontend` image; `kubectl get ingress app-ingress -n sdd-apps` still present after any apply.
+- Key gotchas: K8s Job `command` REPLACES ENTRYPOINT (use `args`); always set `imagePullSecrets: ecr-pull-secret` on private-image workloads; Job `spec.template` immutable (delete-before-apply, standalone); placeholder occurrences exactly one per manifest (014).

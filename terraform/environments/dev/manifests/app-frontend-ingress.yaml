@@ -1,51 +1,9 @@
-# Application frontend + Ingress (007-app-frontend-ingress) — sdd-apps namespace.
-# Image is substituted by Terraform (012): empty frontend_image_tag -> public baseline
-# (nginx:alpine, no imagePullSecrets); non-empty -> ECR image + ecr-pull-secret.
+# Application frontend Service + Ingress + Certificate (007-app-frontend-ingress) —
+# sdd-apps namespace. Split (015-10): the frontend Deployment moved to app-frontend.yaml
+# (count-gated on frontend_image_tag); this file is applied on EVERY terraform apply
+# (always-applied null_resource) so fresh cluster recreations stay complete.
 # %%INGRESS_HOST%% is replaced by Terraform (var.ingress_host) before base64.
 # Each %%...%% placeholder appears exactly once (014 gotcha: replace() hits all occurrences).
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: app-frontend
-  namespace: sdd-apps
-  labels:
-    app: app-frontend
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: app-frontend
-  template:
-    metadata:
-      labels:
-        app: app-frontend
-    spec:
-      containers:
-        - name: app-frontend
-          image: %%FRONTEND_IMAGE%%
-          ports:
-            - containerPort: 80
-              name: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 3
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 10
-            periodSeconds: 20
-            timeoutSeconds: 3
-          resources:
-            requests:
-              memory: 64Mi
-            limits:
-              memory: 128Mi
-%%FRONTEND_PULL_SECRET%%
 ---
 apiVersion: v1
 kind: Service
