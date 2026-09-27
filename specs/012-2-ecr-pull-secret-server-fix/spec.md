@@ -1,3 +1,10 @@
+---
+name: 012-2-ecr-pull-secret-server-fix
+description: Fix the docker-server value in create-ecr-pull-secret.sh to the bare registry host so kubelet matches the auth key and ECR pulls stop failing with no basic auth credentials.
+date: 2026-09-23
+status: Draft
+---
+
 # Spec: ECR Pull Secret Server Fix
 
 **Feature Branch**: `012-2-ecr-pull-secret-server-fix` | **Date**: 2026-09-23 | **Status**: Draft

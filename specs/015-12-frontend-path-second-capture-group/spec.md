@@ -1,3 +1,10 @@
+---
+name: 015-12-frontend-path-second-capture-group
+description: Add the second capture group to the frontend path regex so the rewrite target is defined and stops collapsing every path to /.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Frontend Path Second Capture Group (Fix Persistent Rewrite-to-/)
 
 **Feature Branch**: `015-12-frontend-path-second-capture-group` | **Date**: 2026-09-26 | **Status**: Draft

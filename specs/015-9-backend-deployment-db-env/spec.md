@@ -1,3 +1,10 @@
+---
+name: 015-9-backend-deployment-db-env
+description: Add the DB env block to the app-backend Deployment container to fix the localhost connection-refused crash loop.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Backend Deployment DB Env
 
 **Feature Branch**: `015-9-backend-deployment-db-env` | **Date**: 2026-09-26 | **Status**: Draft

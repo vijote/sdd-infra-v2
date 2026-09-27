@@ -1,3 +1,10 @@
+---
+name: 015-3-migrate-bootstrap-base64-pod-script
+description: Base64-encode the pod-side bootstrap script in the SSM payload so quoting survives the Terraform to SSM to control-plane shell layers.
+date: 2026-09-25
+status: Draft
+---
+
 # Spec: Migrate Bootstrap Base64 Pod Script
 
 **Feature Branch**: `015-3-migrate-bootstrap-base64-pod-script` | **Date**: 2026-09-25 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 015-7-migrate-job-recreate-on-apply
+description: Delete the backend-db-migrate Job before re-applying it to avoid the immutable spec.template error on subsequent deploys.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Migrate Job Recreate On Apply
 
 **Feature Branch**: `015-7-migrate-job-recreate-on-apply` | **Date**: 2026-09-26 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 015-14-ingress-apply-order
+description: Apply the passthrough app-ingress before the app-ingress-api rewrite Ingress so the validating webhook does not reject host and path collisions with stale objects.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Ingress Apply Order (Passthrough Before API)
 
 **Feature Branch**: `015-14-ingress-apply-order` | **Date**: 2026-09-26 | **Status**: Draft

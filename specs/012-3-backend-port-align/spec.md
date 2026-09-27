@@ -1,3 +1,10 @@
+---
+name: 012-3-backend-port-align
+description: Align the app-backend manifest to the Go app actual listen port 8080 (containerPort, probes, and Service targetPort).
+date: 2026-09-23
+status: Draft
+---
+
 # Spec: Backend Port Align
 
 **Feature Branch**: `012-3-backend-port-align` | **Date**: 2026-09-23 | **Status**: Draft

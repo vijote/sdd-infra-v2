@@ -1,3 +1,10 @@
+---
+name: 012-ecr-image-deploy
+description: Deploy backend and frontend images from ECR to the cluster via workflow_dispatch, Terraform SSM manifest substitution, and ecr-pull-secret wiring.
+date: 2026-09-23
+status: Draft
+---
+
 # Spec: ECR Image Deploy Pipeline
 
 **Feature Branch**: `012-ecr-image-deploy` | **Date**: 2026-09-23 | **Status**: Draft

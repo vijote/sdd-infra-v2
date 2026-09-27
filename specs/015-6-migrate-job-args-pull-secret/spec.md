@@ -1,3 +1,10 @@
+---
+name: 015-6-migrate-job-args-pull-secret
+description: Use args instead of command for the migrate Job and add the ecr-pull-secret imagePullSecret so fresh ECR pulls authenticate.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Migrate Job Args & Pull Secret
 
 **Feature Branch**: `015-6-migrate-job-args-pull-secret` | **Date**: 2026-09-26 | **Status**: Draft

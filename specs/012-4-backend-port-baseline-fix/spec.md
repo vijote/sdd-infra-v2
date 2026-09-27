@@ -1,3 +1,10 @@
+---
+name: 012-4-backend-port-baseline-fix
+description: Make the backend port conditional on the image tag (nginx baseline 80, ECR Go app 8080) via BACKEND_PORT substitution to fix the broken baseline bootstrap.
+date: 2026-09-23
+status: Draft
+---
+
 # Spec: Backend Port Baseline Fix
 
 **Feature Branch**: `012-4-backend-port-baseline-fix` | **Date**: 2026-09-23 | **Status**: Draft

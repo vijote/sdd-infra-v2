@@ -1,3 +1,10 @@
+---
+name: 015-5-migrate-job-entrypoint-arg-fix
+description: Stop overriding the migrate Job entrypoint path (stat /app/backend failed) and pass migrate per the image entrypoint contract.
+date: 2026-09-25
+status: Draft
+---
+
 # Spec: Migrate Job Entrypoint Arg Fix
 
 **Feature Branch**: `015-5-migrate-job-entrypoint-arg-fix` | **Date**: 2026-09-25 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 015-8-migrate-job-delete-outside-pipeline
+description: Move the Job delete before the manifest pipeline so kubectl apply receives the decoded manifest (fix no objects passed to apply).
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Migrate Job Delete Outside Pipeline
 
 **Feature Branch**: `015-8-migrate-job-delete-outside-pipeline` | **Date**: 2026-09-26 | **Status**: Draft

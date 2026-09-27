@@ -1,3 +1,10 @@
+---
+name: 015-backend-db-migrate-job
+description: Add a one-shot backend-db-migrate Job (arg migrate) gated before the app-backend Deployment apply, with DB and user bootstrap for sdd_backend.
+date: 2026-09-25
+status: Draft
+---
+
 # Spec: Backend DB Migrate Job
 
 **Feature Branch**: `015-backend-db-migrate-job` | **Date**: 2026-09-25 | **Status**: Draft

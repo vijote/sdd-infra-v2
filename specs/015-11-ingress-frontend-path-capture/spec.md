@@ -1,3 +1,10 @@
+---
+name: 015-11-ingress-frontend-path-capture
+description: Capture the frontend path in the app-ingress rewrite so the frontend serves real asset paths instead of a white page.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Ingress Frontend Path Capture (Fix White Page)
 
 **Feature Branch**: `015-11-ingress-frontend-path-capture` | **Date**: 2026-09-26 | **Status**: Draft

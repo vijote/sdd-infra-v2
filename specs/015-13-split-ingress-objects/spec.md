@@ -1,3 +1,10 @@
+---
+name: 015-13-split-ingress-objects
+description: Split into two Ingress objects: app-ingress-api with the /api rewrite and app-ingress passthrough for the frontend.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Split Ingress Objects (API Rewrite vs Frontend Passthrough)
 
 **Feature Branch**: `015-13-split-ingress-objects` | **Date**: 2026-09-26 | **Status**: Draft

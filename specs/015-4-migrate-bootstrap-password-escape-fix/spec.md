@@ -1,3 +1,10 @@
+---
+name: 015-4-migrate-bootstrap-password-escape-fix
+description: Fix the HCL escaping of the mysql password flag in the base64 payload so the pod receives the raw password (fix ERROR 1045 access denied).
+date: 2026-09-25
+status: Draft
+---
+
 # Spec: Migrate Bootstrap Password Escape Fix
 
 **Feature Branch**: `015-4-migrate-bootstrap-password-escape-fix` | **Date**: 2026-09-25 | **Status**: Draft

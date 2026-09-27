@@ -1,3 +1,10 @@
+---
+name: 012-6-ingress-annotations-placement
+description: Move the Ingress annotations block from spec to metadata to fix the K8s 1.28 strict-decoding rejection of unknown field spec.annotations.
+date: 2026-09-23
+status: Draft
+---
+
 # Spec: Ingress Annotations Placement Fix
 
 **Feature Branch**: `012-6-ingress-annotations-placement` | **Date**: 2026-09-23 | **Status**: Draft

@@ -1,3 +1,10 @@
+---
+name: 015-2-migrate-bootstrap-quote-gate-fix
+description: Fix the 015 SSM bootstrap quoting (GRANT and FLUSH leaking as shell commands) and enforce the Job-complete gate before the Deployment step.
+date: 2026-09-25
+status: Draft
+---
+
 # Spec: Migrate Bootstrap Quote & Gate Fix
 
 **Feature Branch**: `015-2-migrate-bootstrap-quote-gate-fix` | **Date**: 2026-09-25 | **Status**: Draft

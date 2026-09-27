@@ -1,3 +1,10 @@
+---
+name: 015-10-empty-tag-skip-apply
+description: Skip the Terraform apply when the dispatched image tag is empty instead of rolling back to the baseline image.
+date: 2026-09-26
+status: Draft
+---
+
 # Spec: Empty Image Tag = Skip Apply (No Baseline Rollback)
 
 **Feature Branch**: `015-10-empty-tag-skip-apply` | **Date**: 2026-09-26 | **Status**: Draft
