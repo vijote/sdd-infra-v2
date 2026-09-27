@@ -1,18 +1,18 @@
 # Current Session State
 
 **Current Spec:**
-`specs/015-12-frontend-path-second-capture-group` (implemented locally; NOT yet committed/pushed — awaiting user instruction)
+`specs/015-13-split-ingress-objects` (implemented locally; NOT yet committed/pushed — awaiting user instruction)
 
 **Objective:**
-Fix the persistent rewrite-to-`/`: rewrite-target `/$2` requires a SECOND capture group; `/(.*)` (015-11) has only one, so `$2` was undefined and everything still rewrote to `/`.
+Fix the persistent rewrite-to-`/` for good: rewrite annotations are PER-INGRESS, so split into two Ingress objects — API (rewrite) and frontend (passthrough).
 
 **Context (Why):**
-Verified live: `/assets/*` AND fake paths return `index.html` as `text/html`. Fix (015-12): frontend path `/()(.*?)` ($1 = "", $2 = rest of URL → identity rewrite); bump `apply_app_services_ingress` manifest_rev trigger so SSM re-applies. Note: LE cert rate-limited until 2026-09-27 01:39:59 UTC (independent; cert-manager self-heals).
+Verified live: `/()(.*?)` (015-12) still rewrote everything to `/` because `(.*?)` is non-greedy (matches empty). Three single-ingress regex attempts failed (Prefix /, /(.*) , /()(.*?)). Fix (015-13): `app-ingress-api` (use-regex + rewrite-target /$2, `/api(/|$)(.*)` -> backend) + `app-ingress` (NO rewrite annotations, `/` Prefix -> frontend); nginx regex locations beat prefix so /api wins. Note: LE cert rate-limited until 2026-09-27 01:39:59 UTC (independent; cert-manager self-heals).
 
 **Modified/Uncommitted Files:**
 - `terraform/environments/dev/main.tf` (manifest_rev trigger bump)
-- `terraform/environments/dev/manifests/app-frontend-ingress.yaml` (frontend path /()(.*?) + comment fix)
-- NEW: `specs/015-12-frontend-path-second-capture-group/` (spec, plan, tasks, checklist)
+- `terraform/environments/dev/manifests/app-frontend-ingress.yaml` (Ingress split: app-ingress-api + app-ingress passthrough)
+- NEW: `specs/015-13-split-ingress-objects/` (spec, plan, tasks, checklist)
 - `.coda/STATE.md` (this file)
 
 **Blockers/Unresolved Bugs:**
@@ -20,4 +20,4 @@ Verified live: `/assets/*` AND fake paths return `index.html` as `text/html`. Fi
 
 **Next Immediate Steps:**
 - Commit + push (user instruction), let CI apply, then validate: `curl -skI https://demo.vijote.dev/assets/index-DaMkeDWv.js | grep -i content-type` → `application/javascript`; fake path → 404; `/api/healthz` still reaches backend.
-- Key gotchas: K8s Job `command` REPLACES ENTRYPOINT (use `args`); always set `imagePullSecrets: ecr-pull-secret` on private-image workloads; Job `spec.template` immutable (delete-before-apply, standalone); placeholder occurrences exactly one per manifest (014); ingress-level rewrite annotations apply to EVERY path and $2 needs a SECOND capture group — frontend rule `/()(.*?)` (015-12).
+- Key gotchas: K8s Job `command` REPLACES ENTRYPOINT (use `args`); always set `imagePullSecrets: ecr-pull-secret` on private-image workloads; Job `spec.template` immutable (delete-before-apply, standalone); placeholder occurrences exactly one per manifest (014); rewrite annotations are PER-INGRESS — split API (rewrite) and frontend (passthrough) Ingress objects (015-13).

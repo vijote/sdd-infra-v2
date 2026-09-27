@@ -21,19 +21,21 @@ spec:
       port: 80
       targetPort: 80
 ---
+# 015-13: annotations are PER-INGRESS, so the API (needs rewrite) and frontend
+# (must NOT rewrite) rules can no longer share one object. Single-ingress regex
+# attempts failed three ways: bare Prefix / (no groups -> $2 empty), /(.*) (one
+# group -> $2 undefined), /()(.*?) (non-greedy -> $2 matches empty). Split:
+# regex locations take precedence over prefix in nginx, so /api still wins.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: app-ingress
+  name: app-ingress-api
   namespace: sdd-apps
   labels:
-    app: app-frontend
+    app: app-backend
   # 012-6: annotations belong in metadata (012-5 misplaced them under spec,
   # which K8s 1.28 strict decoding rejects). Regex capture $2 = everything
-  # after /api. 015-12: these annotations apply to EVERY path and $2 requires
-  # a SECOND capture group — /(.*) has only one ($2 undefined -> everything
-  # rewrote to /), so the frontend rule is /()(.*): $1 = "", $2 = rest of
-  # URL -> the rewrite is an identity (assets served as-is, unknown paths 404).
+  # after /api; rewrite-target /$2 strips the /api prefix.
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
@@ -54,8 +56,28 @@ spec:
                 name: app-backend
                 port:
                   number: 80
-          - path: /()(.*?)
-            pathType: ImplementationSpecific
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: sdd-apps
+  labels:
+    app: app-frontend
+  # 015-13: NO rewrite annotations — frontend is a passthrough. Assets served
+  # as-is with correct Content-Type; unknown paths 404 from the app.
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - %%INGRESS_HOST%%
+      secretName: demo-vijote-dev-tls
+  rules:
+    - host: %%INGRESS_HOST%%
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
             backend:
               service:
                 name: app-frontend
