@@ -21,11 +21,41 @@ spec:
       port: 80
       targetPort: 80
 ---
-# 015-13: annotations are PER-INGRESS, so the API (needs rewrite) and frontend
-# (must NOT rewrite) rules can no longer share one object. Single-ingress regex
-# attempts failed three ways: bare Prefix / (no groups -> $2 empty), /(.*) (one
-# group -> $2 undefined), /()(.*?) (non-greedy -> $2 matches empty). Split:
+# 015-13/015-14: annotations are PER-INGRESS, so the API (needs rewrite) and
+# frontend (must NOT rewrite) rules can no longer share one object. Single-ingress
+# regex attempts failed three ways: bare Prefix / (no groups -> $2 empty), /(.*)
+# (one group -> $2 undefined), /()(.*?) (non-greedy -> $2 matches empty). Split:
 # regex locations take precedence over prefix in nginx, so /api still wins.
+# 015-14: the passthrough app-ingress is applied FIRST — the admission webhook
+# rejects app-ingress-api while the stale pre-split app-ingress still claims the
+# /api path for this host; replacing app-ingress first removes that conflict.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: sdd-apps
+  labels:
+    app: app-frontend
+  # 015-13: NO rewrite annotations — frontend is a passthrough. Assets served
+  # as-is with correct Content-Type; unknown paths 404 from the app.
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - %%INGRESS_HOST%%
+      secretName: demo-vijote-dev-tls
+  rules:
+    - host: %%INGRESS_HOST%%
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app-frontend
+                port:
+                  number: 80
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -54,33 +84,6 @@ spec:
             backend:
               service:
                 name: app-backend
-                port:
-                  number: 80
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: app-ingress
-  namespace: sdd-apps
-  labels:
-    app: app-frontend
-  # 015-13: NO rewrite annotations — frontend is a passthrough. Assets served
-  # as-is with correct Content-Type; unknown paths 404 from the app.
-spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - %%INGRESS_HOST%%
-      secretName: demo-vijote-dev-tls
-  rules:
-    - host: %%INGRESS_HOST%%
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: app-frontend
                 port:
                   number: 80
 ---
