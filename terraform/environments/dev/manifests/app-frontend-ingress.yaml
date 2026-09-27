@@ -30,7 +30,9 @@ metadata:
     app: app-frontend
   # 012-6: annotations belong in metadata (012-5 misplaced them under spec,
   # which K8s 1.28 strict decoding rejects). Regex capture $2 = everything
-  # after /api; frontend / rule unaffected.
+  # after /api. 015-11: these annotations apply to EVERY path — the frontend
+  # rule is /(.*) so $2 = rest of URL and the rewrite is an identity
+  # (assets served as-is; a bare Prefix / would rewrite everything to /).
   annotations:
     nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
@@ -51,8 +53,8 @@ spec:
                 name: app-backend
                 port:
                   number: 80
-          - path: /
-            pathType: Prefix
+          - path: /(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: app-frontend

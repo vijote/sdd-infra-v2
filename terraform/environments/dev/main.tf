@@ -614,7 +614,7 @@ resource "null_resource" "apply_app_services_ingress" {
   triggers = {
     ingress_host = var.ingress_host
     instance_id  = module.control_plane.control_plane_instance_id # 004-10: re-apply on cluster recreation
-    manifest_rev = "015-10-services-split"                        # 015-10: Service/Ingress-only manifests
+    manifest_rev = "015-11-frontend-path-capture"                 # 015-11: frontend path /(.*) capture
   }
 
   provisioner "local-exec" {
